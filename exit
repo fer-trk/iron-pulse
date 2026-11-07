@@ -1,0 +1,95 @@
+[33m0513895[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/frontend[m[33m, [m[1;31morigin/feature/frontend[m[33m)[m feat: add memberships
+[33mab47409[m fix frontend pages layout consistency
+[33m8a35397[m agregao de ficheros js y html de plans y reports
+[33m5eb3642[m feat(frontend): implement plans and reports pages
+[33m4bf6d3e[m fix(startup): resolve application bootstrapping errors
+[33mf167d2e[m fix(frontend): correct API URL, ui helpers, field mismatches and add login page
+[33m7c55cf0[m feat(frontend): connect core modules to backend API and implement JWT auth
+[33m8efc977[m feat: act docs
+[33mbd34ba2[m chore: conflictos resueltos en readme y member.py
+[33mbfd779e[m docs: guardando cambios de hector antes del pull
+[33m57a472b[m fix: auth token uses correct subject format
+[33m191e0ed[m fix: correct tokenUrl for OAuth2
+[33m2000ba6[m fix: disable SSL for PostgreSQL connection
+[33me0b5385[m feat: add auth router
+[33m714828f[m feat: initial alembic migration
+[33m56e24f5[m fix: alembic env uses os.getenv directly
+[33m6b6918b[m fix: add user model and fix reservations import
+[33md2709f6[m feat: bug fix
+[33m1831328[m feat: act files
+[33m8bdc4ab[m optimización de index y hoja de estilos
+[33m4f6e22b[m corrección nombre archivo de estilo
+[33m5f7f9a1[m html index más estilo
+[33m22f0dfe[m fix(tests): add /api/v1 prefix to shift, reservation and membership test paths
+[33m34f6a17[m[33m ([m[1;31morigin/fix[m[33m)[m Merge branch 'fix' of https://github.com/Bootcamp-IA-MAD-P7/Project2-Grupo2 into fix
+[33m01e8860[m fix: add core config, security, session and report module
+[33me349973[m test: añadidos tests de integración y servicios de miembros
+[33mddad68f[m Add frontend structure
+[33m19bb780[m feat: test
+[33m67cf8fe[m feat: add frontend folder structure and initial files
+[33mf8506f2[m[33m ([m[1;32mfix[m[33m)[m fix: delete settings files
+[33m37417b1[m first commit
+[33m2d037ef[m[33m ([m[1;31morigin/feature/turnos-reservas[m[33m)[m fix: bugs
+[33mec9821c[m[33m ([m[1;32mdeveloper[m[33m)[m Merge pull request #58 from Bootcamp-IA-MAD-P7/feature/asistencias-reportes
+[33mb2b3c7c[m[33m ([m[1;31morigin/feature/asistencias-reportes[m[33m)[m feat: actualización de readme
+[33m6a89ccd[m fix: correct main.py — CORS before routers, deduplicate imports, add /api/v1 prefix to all routers, register shifts/reservations/attendance routers, set allow_origins to ["*"] for dev
+[33m6e30747[m Merge pull request #54 from Bootcamp-IA-MAD-P7/feature/asistencias-reportes
+[33m9d0a301[m fix: add gunicorn to requirements
+[33m46d8956[m Merge branch 'developer' into feature/asistencias-reportes
+[33m4c7b57a[m feat: add attendance reports and csv export
+[33m5b286a0[m agregué las vinculaciones a mis ficheros en el main
+[33me17d61e[m grandes avances en cuanto a la generación de reportes y test
+[33me6632c6[m fix: correct model names in alembic env, fix gunicorn command
+[33md798930[m fix: Removiendo nginx porque esta fallando se considera mientras puerto 8000
+[33m5ca38fb[m feat: s1-docker — Dockerfile, docker-compose, alembic, nginx
+[33mb5e5171[m fix(main): register all routers and clean up middleware order
+[33m98464b3[m fix: services(membership.py)
+[33md4b915d[m feat(frontend): restyle UI
+[33md9f6bec[m feat(frontend): add Streamlit MVP with all modules
+[33mabfd2ec[m[33m ([m[1;31morigin/tests[m[33m)[m Merge branch 'feature/planes-miembros' into developer
+[33mcc9ff8a[m feat: añadido enum para el estado de los miembros
+[33ma14dec2[m Merge pull request #53 from Bootcamp-IA-MAD-P7/feature/turnos-reservas
+[33m27e33fc[m Merge branch 'developer' into feature/turnos-reservas
+[33m723884c[m Merge pull request #52 from Bootcamp-IA-MAD-P7/feature/asistencias-reportes
+[33mcdff6c8[m Merge branch 'developer' into feature/asistencias-reportes
+[33mb4d6944[m feat: add attendance listing with pagination
+[33mcbb0ee4[m Merge pull request #51 from Bootcamp-IA-MAD-P7/feature/membresias-pagos
+[33meff6ece[m Merge branch 'developer' into feature/turnos-reservas
+[33mc0ea06b[m Merge pull request #49 from Bootcamp-IA-MAD-P7/feature/planes-miembros
+[33m9fb657d[m[33m ([m[1;31morigin/feature/membresias-pagos[m[33m, [m[1;32mfeature/membresias-pagos[m[33m)[m feat: update
+[33m7a617c2[m[33m ([m[1;31morigin/feature/planes-miembros[m[33m)[m cambios antes del merge
+[33m1c4743d[m fix(memberships-payments): fix router imports, method names and missing plan import
+[33m4a6eb24[m Fix: guardado definitivo de tablename plans en plural
+[33meaab619[m feat: integrate attendance registration and listing
+[33m7284b93[m fix(tests): update main import path in conftest
+[33m45b2885[m fix(models): add attendance relationship and import to Reservation
+[33m34573ba[m Feat: agregar relaciones bidireccionales con reservas y asistencias en Member
+[33m622566e[m test(services): add unit tests for shift and reservation services
+[33ma4f16a4[m Fix: actualizar tablename de member a plural segun convenciones
+[33me0ad6bb[m test(shifts, reservations): add endpoint tests
+[33mf7f2490[m test(conftest): add shared pytest fixtures with httpx and in-memory SQLite
+[33mbc6b8d8[m fix(services, schemas): fix class_name reference, add DayOfWeek import, fix ReservationCreate fields
+[33mfc86a7d[m feat(routers): add membership and payment API endpoints
+[33mc75e60f[m feat(routers): add shifts and reservations routers
+[33m1091530[m feat(services): add payment core service logic
+[33m735c50d[m test(membership): add tests and align folder structure
+[33m7f78144[m feat(services): add reservation service with CRUD operations and cancellation logic
+[33mbf3956c[m feat(services): add shift service with CRUD operations and availability calculation
+[33mbfdcb1d[m feat: add attendance registration endpoint
+[33mc16f389[m Fix: corregidas dependencias de sesion y validador de email en routers
+[33mc58d30c[m feat: add attendance model schemas and registration endpoint
+[33m92f68f2[m feat(schemas): add reservation schemas with base, create, update and read
+[33m4b6f24e[m feat(schemas): add shift schemas with base, create, update, read and availability
+[33m3370460[m Refractor modelos plan y member a ingles y singular
+[33mcf13b74[m feat(models): add day_of_week to AvailableShift
+[33mf307391[m feat(schemas): add membership and payment Pydantic validation schemas
+[33m90171a3[m feat(models): add memberships and payments
+[33m9aeec76[m fix: rename models to English naming convention
+[33m0b79fd9[m feat: add Reserva model
+[33mfceef2d[m feat: cambio en nombre clase reservas
+[33md0ee802[m feat: crear modelo asistencia con SQLModel
+[33m6a46dfc[m feat: add TurnoDisponible model
+[33m85d6c53[m feat: s1-setup — estructura, config, session, main, requirements
+[33m9395259[m[33m ([m[1;32mmain[m[33m)[m Update README.md
+[33m60a8abd[m Add greeting to README
+[33ma9d33e0[m Initial commit

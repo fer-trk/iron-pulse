@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Iron Pulse | Performance Gym</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <nav class="navbar navbar-expand-lg main-navbar">
+      <div class="container-fluid navbar-container">
+        <a class="navbar-brand brand" href="index.html" aria-label="Iron Pulse home">
+          <img
+            src="assets/img/iron-pulse-logo.png"
+            alt="Iron Pulse"
+            class="navbar-logo"
+          />
+        </a>
+
+        <button
+          class="navbar-toggler custom-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#ironPulseNavbar"
+          aria-controls="ironPulseNavbar"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="ironPulseNavbar">
+          <ul class="navbar-nav navigation-menu ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="members.html">Members</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="plans.html">Plans</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="memberships.html">Memberships</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="classes.html">Classes</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="payments.html">Payments</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="reports.html">Reports</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="localStorage.clear(); window.location.href='login.html'">
+              <i class="bi bi-box-arrow-right"></i> Logout
+             </a>
+            </li>
+          </ul>
+
+          <div class="navbar-actions">
+            <a class="nav-cta" href="index.html">
+              DASHBOARD
+              <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <section class="hero-section" aria-labelledby="hero-title">
+      <div class="hero-content">
+        <div class="hero-pulse-mark" aria-hidden="true">
+          <i class="bi bi-activity"></i>
+        </div>
+
+        <p class="hero-kicker">High performance gym management</p>
+
+        <h1 id="hero-title" class="hero-title">
+          Train harder. Manage smarter.
+        </h1>
+
+        <p class="hero-description">
+          Iron Pulse centralizes members, plans, classes, payments and attendance
+          in one operational platform built for high-intensity fitness businesses.
+        </p>
+
+        <div class="hero-actions">
+          <a class="primary-action" href="members.html">
+            Manage members
+            <i class="bi bi-people-fill"></i>
+          </a>
+
+          <a class="secondary-action" href="reports.html">
+            View reports
+            <i class="bi bi-graph-up-arrow"></i>
+          </a>
+        </div>
+      </div>
+
+      <aside class="hero-panel" aria-label="Today overview">
+        <div class="panel-header">
+          <span class="panel-label">Today’s pulse</span>
+          <span class="live-indicator">Ready</span>
+        </div>
+
+        <div class="metric-highlight">
+          <span class="metric-number">No data</span>
+          <span class="metric-text">No classes loaded for today</span>
+        </div>
+
+        <div class="hero-class-list">
+          <article class="hero-class-card empty-state-card">
+            <div>
+              <h2>No classes yet</h2>
+              <p>Classes will appear here when they are created.</p>
+            </div>
+            <span class="status-badge status-muted">Pending</span>
+          </article>
+        </div>
+      </aside>
+    </section>
+
+    <section class="kpi-section" aria-label="Business indicators">
+      <article class="kpi-card">
+        <div class="kpi-icon">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <p class="kpi-label">Active members</p>
+        <strong class="kpi-value">No data</strong>
+        <span class="kpi-note">Members have not been loaded yet</span>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-icon">
+          <i class="bi bi-calendar2-week-fill"></i>
+        </div>
+        <p class="kpi-label">Classes today</p>
+        <strong class="kpi-value">No data</strong>
+        <span class="kpi-note">Classes have not been loaded yet</span>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-icon">
+          <i class="bi bi-credit-card-2-front-fill"></i>
+        </div>
+        <p class="kpi-label">Monthly revenue</p>
+        <strong class="kpi-value">No data</strong>
+        <span class="kpi-note">Payments have not been loaded yet</span>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-icon">
+          <i class="bi bi-check2-circle"></i>
+        </div>
+        <p class="kpi-label">Attendance today</p>
+        <strong class="kpi-value">No data</strong>
+        <span class="kpi-note">Attendance has not been registered yet</span>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="dashboard-card schedule-card">
+        <div class="card-header-row">
+          <div>
+            <p class="section-kicker">Operations</p>
+            <h2>Class schedule</h2>
+          </div>
+
+          <a class="card-link" href="classes.html">
+            View all
+            <i class="bi bi-arrow-up-right"></i>
+          </a>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Class</th>
+                <th>Time</th>
+                <th>Coach</th>
+                <th>Capacity</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td colspan="5" class="empty-table-message">
+                  No classes have been loaded yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="dashboard-card quick-actions-card">
+        <div class="card-header-row">
+          <div>
+            <p class="section-kicker">Shortcuts</p>
+            <h2>Quick actions</h2>
+          </div>
+        </div>
+
+        <div class="quick-actions-list">
+          <a class="quick-action-item" href="members.html">
+            <i class="bi bi-person-plus-fill"></i>
+            <span>Add new member</span>
+          </a>
+
+          <a class="quick-action-item" href="classes.html">
+            <i class="bi bi-calendar-plus-fill"></i>
+            <span>Create class</span>
+          </a>
+
+          <a class="quick-action-item" href="payments.html">
+            <i class="bi bi-cash-coin"></i>
+            <span>Register payment</span>
+          </a>
+
+          <a class="quick-action-item" href="attendance.html">
+            <i class="bi bi-clipboard2-check-fill"></i>
+            <span>Register attendance</span>
+          </a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand">
+      <span class="footer-pulse-icon">
+        <i class="bi bi-activity"></i>
+      </span>
+      <span>Iron Pulse</span>
+    </div>
+
+    <div class="footer-values">
+      <div class="footer-value">
+        <i class="bi bi-activity"></i>
+        <span>Power</span>
+      </div>
+
+      <div class="footer-value">
+        <i class="bi bi-shield-fill-check"></i>
+        <span>Resilience</span>
+      </div>
+
+      <div class="footer-value">
+        <i class="bi bi-bullseye"></i>
+        <span>Focus</span>
+      </div>
+
+      <div class="footer-value">
+        <i class="bi bi-people-fill"></i>
+        <span>Community</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

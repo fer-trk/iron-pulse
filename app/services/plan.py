@@ -50,3 +50,20 @@ class PlanService:
         session.commit()
         session.refresh(plan)
         return plan
+
+    @staticmethod
+    def delete(session: Session, plan_id: int) -> None:
+        from ..models.membership import Membership
+        plan = PlanService.get_by_id(session, plan_id)
+        # Block deletion if there are memberships linked to this plan
+        linked = session.exec(
+            select(Membership).where(Membership.plan_id == plan_id)
+        ).first()
+        if linked:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot delete a plan that has memberships linked to it."
+            )
+        session.delete(plan)
+        session.commit()
+        logger.info(f"Plan deleted: id={plan_id}")

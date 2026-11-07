@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iron Pulse | Memberships</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="navbar navbar-expand-lg main-navbar">
+      <div class="container-fluid navbar-container">
+        <a class="navbar-brand brand" href="index.html"><img src="assets/img/iron-pulse-logo.png" alt="Iron Pulse" class="navbar-logo" /></a>
+        <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ironPulseNavbar"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="ironPulseNavbar">
+          <ul class="navbar-nav navigation-menu ms-auto">
+            <li class="nav-item"><a class="nav-link" href="members.html">Members</a></li>
+            <li class="nav-item"><a class="nav-link" href="plans.html">Plans</a></li>
+            <li class="nav-item"><a class="nav-link active" href="memberships.html">Memberships</a></li>
+            <li class="nav-item"><a class="nav-link" href="classes.html">Classes</a></li>
+            <li class="nav-item"><a class="nav-link" href="payments.html">Payments</a></li>
+            <li class="nav-item"><a class="nav-link" href="reports.html">Reports</a></li>
+            <li class="nav-item"><a class="nav-link" href="#" onclick="localStorage.clear(); window.location.href='login.html'"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+          </ul>
+          <div class="navbar-actions"><a class="nav-cta" href="index.html">DASHBOARD <i class="bi bi-arrow-right"></i></a></div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <section class="dashboard-card">
+      <div class="card-header-row">
+        <div>
+          <p class="section-kicker">Memberships</p>
+          <h1 class="page-title">Memberships</h1>
+          <p class="page-subtitle">Assign plans to members. A membership is required before registering a payment.</p>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="openAddModal()"><i class="bi bi-plus-lg"></i> New Membership</button>
+        <button class="btn btn-outline-secondary" onclick="loadMemberships()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+      </div>
+      <div id="alert-container"></div>
+      <div class="content-card"><div id="memberships-table-container"></div></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-brand"><span class="footer-pulse-icon"><i class="bi bi-activity"></i></span><span>Iron Pulse</span></div>
+    <div class="footer-values">
+      <div class="footer-value"><i class="bi bi-activity"></i><span>Power</span></div>
+      <div class="footer-value"><i class="bi bi-shield-fill-check"></i><span>Resilience</span></div>
+      <div class="footer-value"><i class="bi bi-bullseye"></i><span>Focus</span></div>
+      <div class="footer-value"><i class="bi bi-people-fill"></i><span>Community</span></div>
+    </div>
+  </footer>
+
+  <!-- MODAL: Add Membership -->
+  <div class="modal fade" id="addMembershipModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">New Membership</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label">Member *</label>
+            <select class="form-select" id="membershipMemberId">
+              <option value="">Select a member...</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Plan *</label>
+            <select class="form-select" id="membershipPlanId" onchange="onPlanSelected()">
+              <option value="">Select a plan...</option>
+              <option value="1" data-price="30"  data-duration="30">Mensual</option>
+              <option value="2" data-price="150" data-duration="180">Semestral</option>
+              <option value="3" data-price="270" data-duration="365">Anual</option>
+            </select>
+          </div>
+
+          <!-- Info del plan: readonly -->
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label text-muted small">Price</label>
+              <input type="text" class="form-control form-control-sm bg-light" id="planInfoPrice"
+                readonly placeholder="Select a plan" />
+            </div>
+            <div class="col-6">
+              <label class="form-label text-muted small">Duration</label>
+              <input type="text" class="form-control form-control-sm bg-light" id="planInfoDuration"
+                readonly placeholder="Select a plan" />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Start Date *</label>
+            <input type="date" class="form-control" id="membershipStartDate" onchange="onStartDateChanged()">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-muted small">End Date (calculated automatically)</label>
+            <input type="text" class="form-control form-control-sm bg-light" id="planInfoEndDate"
+              readonly placeholder="Select a plan and start date" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="membershipStatus">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
+          <div id="add-form-error" class="alert alert-danger d-none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitAddMembership()">Save Membership</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Edit Membership -->
+  <div class="modal fade" id="editMembershipModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Membership</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editMembershipId" />
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="editMembershipStatus">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div id="edit-form-error" class="alert alert-danger d-none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="submitEditMembership()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Delete Membership -->
+  <div class="modal fade" id="deleteMembershipModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Delete Membership</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="deleteMembershipId" />
+          <p>Are you sure you want to cancel this membership?</p>
+          <p class="text-muted small">The membership will be permanently deleted.</p>
+          <div id="delete-membership-error" class="alert alert-danger d-none mt-2"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back</button>
+          <button type="button" class="btn btn-danger" onclick="submitDeleteMembership()">Delete Membership</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/memberships.js"></script>
+</body>
+</html>

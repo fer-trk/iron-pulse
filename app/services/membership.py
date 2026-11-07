@@ -35,7 +35,6 @@ class MembershipService:
     @staticmethod
     def create(session: Session, data: MembershipCreate) -> Membership:
         from ..models.member import Member
-        from ..models.plan import Plan
         member = session.get(Member, data.member_id)
         if not member:
             raise HTTPException(status_code=404, detail="Member not found")
@@ -53,6 +52,25 @@ class MembershipService:
         session.refresh(membership)
         logger.info(f"Membership created: member={data.member_id} plan={plan.name}")
         return membership
+
+    @staticmethod
+    def delete(session: Session, membership_id: int) -> None:
+        membership = MembershipService.get_by_id(session, membership_id)
+        # Block deletion if there are completed payments linked to this membership
+        payments = session.exec(
+            select(Payment).where(
+                Payment.membership_id == membership_id,
+                Payment.status == PaymentStatus.completed
+            )
+        ).first()
+        if payments:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot delete a membership with completed payments."
+            )
+        session.delete(membership)
+        session.commit()
+        logger.info(f"Membership deleted: id={membership_id}")
 
     @staticmethod
     def renew(session: Session, membership_id: int) -> Membership:

@@ -34,19 +34,19 @@ class PaymentService:
 
     @staticmethod
     def create(session: Session, data: PaymentCreate) -> Payment:
+        from ..models.plan import Plan
+
         membership = session.get(Membership, data.membership_id)
         if not membership:
             raise HTTPException(status_code=404, detail="Membership not found")
         if membership.status == MembershipStatus.cancelled:
             raise HTTPException(status_code=400, detail="Cannot register payments on cancelled memberships")
-        
-        if data.amount is None:
-            from ..models.plan import Plan
-            plan = session.get(Plan, membership.plan_id)
-        if not plan:
-            raise HTTPException(status_code=404, detail="Plan not found")
-        data = data.model_copy(update={"amount": Decimal(str(plan.price))})
 
+        if data.amount is None:
+            plan = session.get(Plan, membership.plan_id)
+            if not plan:
+                raise HTTPException(status_code=404, detail="Plan not found")
+            data = data.model_copy(update={"amount": Decimal(str(plan.price))})
 
         payment = Payment.model_validate(data)
         session.add(payment)
@@ -61,7 +61,6 @@ class PaymentService:
                 )
             ).all()
             total = sum(p.amount for p in previous_payments) + payment.amount
-            from ..models.plan import Plan
             plan = session.get(Plan, membership.plan_id)
             if plan and total >= plan.price:
                 membership.status = MembershipStatus.active
@@ -74,18 +73,30 @@ class PaymentService:
         return payment
 
     @staticmethod
+    def update(session: Session, payment_id: int, data: PaymentUpdate) -> Payment:
+        payment = PaymentService.get_by_id(session, payment_id)
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(payment, key, value)
+        session.add(payment)
+        session.commit()
+        session.refresh(payment)
+        logger.info(f"Payment {payment_id} updated")
+        return payment
+
+    @staticmethod
     def export_csv(session: Session) -> list[dict]:
+        from ..models.member import Member
+        from ..models.plan import Plan
+
         payments = session.exec(select(Payment)).all()
         rows = []
         for p in payments:
             membership = session.get(Membership, p.membership_id)
-            from ..models.member import Member
-            from ..models.plan import Plan
             member = session.get(Member, membership.member_id) if membership else None
             plan = session.get(Plan, membership.plan_id) if membership else None
             rows.append({
                 "id": p.id,
-                "member": f"{member.first_name} {member.last_name}" if member else "",  # fixed
+                "member": f"{member.first_name} {member.last_name}" if member else "",
                 "plan": plan.name if plan else "",
                 "amount": str(p.amount),
                 "payment_method": p.payment_method.value,
@@ -97,9 +108,13 @@ class PaymentService:
 
     @staticmethod
     def delete(session: Session, payment_id: int) -> None:
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         payment = PaymentService.get_by_id(session, payment_id)
         if datetime.utcnow() - payment.created_at > timedelta(minutes=30):
-            raise HTTPException(status_code=400, detail="Payment can only be deleted within 30 minutes of creation")
+            raise HTTPException(
+                status_code=400,
+                detail="Payment can only be deleted within 30 minutes of creation."
+            )
         session.delete(payment)
         session.commit()
+        logger.info(f"Payment {payment_id} deleted")

@@ -39,7 +39,7 @@ def expiring_soon(
 
 @router.get("/{membership_id}", response_model=MembershipRead, summary="Membership detail")
 def detail(membership_id: int, session: Session = Depends(get_session), _=auth):
-    return MembershipService.get_by_id(session, membership_id)  # fixed
+    return MembershipService.get_by_id(session, membership_id)
 
 
 @router.patch("/{membership_id}", response_model=MembershipRead, summary="Update status")
@@ -58,6 +58,11 @@ def update(
     session.commit()
     session.refresh(membership)
     return membership
+
+
+@router.delete("/{membership_id}", status_code=204, summary="Delete membership")
+def delete(membership_id: int, session: Session = Depends(get_session), _=auth):
+    MembershipService.delete(session, membership_id)
 
 
 @router.post("/{membership_id}/renew", response_model=MembershipRead, status_code=201, summary="Renew membership")

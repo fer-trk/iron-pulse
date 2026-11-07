@@ -1,6 +1,5 @@
 import logging
 from typing import Optional
-from datetime import datetime
 from sqlmodel import Session, select
 from fastapi import HTTPException
 
@@ -58,15 +57,19 @@ class MemberService:
     @staticmethod
     def delete(session: Session, member_id: int) -> None:
         from ..models.membership import Membership, MembershipStatus
-    from sqlmodel import select
-    member = MemberService.get_by_id(session, member_id)
-    active = session.exec(
-        select(Membership).where(
-            Membership.member_id == member_id,
-            Membership.status == MembershipStatus.active
-        )
-    ).first()
-    if active:
-        raise HTTPException(status_code=400, detail="Cannot delete a member with an active membership")
-    session.delete(member)
-    session.commit()
+        from sqlmodel import select
+        member = MemberService.get_by_id(session, member_id)
+        active = session.exec(
+            select(Membership).where(
+                Membership.member_id == member_id,
+                Membership.status == MembershipStatus.active
+            )
+        ).first()
+        if active:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot delete a member with an active membership. Cancel the membership first."
+            )
+        session.delete(member)
+        session.commit()
+        logger.info(f"Member deleted: id={member_id}")
