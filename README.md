@@ -217,3 +217,41 @@ Para garantizar la lógica de accesos en el backend, la enumeración de estados 
 * **Active:** Socio al corriente de pago con acceso total a las instalaciones y reservas.
 * **Inactive:** Socio en situación de baja temporal o con la suscripción web caducada.
 * **Suspended:** Acceso bloqueado por impagos del plan o por incidencias en el control de aforo.
+
+
+## 📑 Documentación Técnica — Iron Pulse (Aporte de Claudio)
+
+### 1. Descripción General del Proyecto
+[cite_start]**Iron Pulse** es una aplicación web de gestión integral para gimnasios diseñada para proporcionar una interfaz operativa completa para el personal del centro[cite: 1, 2, 12]. [cite_start]Su propósito principal es centralizar procesos clave como el alta de socios, la asignación de planes, el control de cobros, horarios de clases y asistencia, eliminando la dependencia de hojas de cálculo o herramientas técnicas directas como Swagger[cite: 7, 10].
+
+* [cite_start]**Problema que resuelve:** Automatiza la gestión fragmentada de centros medianos, reduciendo errores humanos y tiempos administrativos mediante una base consolidada[cite: 9, 10].
+* [cite_start]**Alcance del Sprint:** El sistema cubre con datos reales (no mocks) e interfaces funcionales los módulos de Dashboard, Members, Plans, Memberships, Payments, Classes, Attendance y Reports[cite: 17, 143].
+
+### 2. Arquitectura Técnica y Stack Tecnológico
+[cite_start]El sistema sigue un flujo desacoplado y estructurado para garantizar el rendimiento y la seguridad del negocio[cite: 27, 144]:
+
+| Capa / Componente | Tecnología Utilizada | Función en el Sistema |
+| :--- | :--- | :--- |
+| **Frontend** | HTML5, CSS3, JavaScript vanilla | [cite_start]Interfaz de usuario limpia e interactiva[cite: 20]. |
+| **Estilos** | Bootstrap 5.3 + Bootstrap Icons | [cite_start]Sistema de diseño coherente con tema oscuro (Dark Theme)[cite: 20, 97]. |
+| **Backend** | FastAPI (Python 3.11) | [cite_start]API REST robusta bajo el prefijo `/api/v1/`[cite: 20, 24]. |
+| **ORM** | SQLModel + SQLAlchemy | [cite_start]Gestión de modelos de datos y mapeo relacional[cite: 20]. |
+| **Base de Datos** | PostgreSQL | [cite_start]Persistencia de datos en contenedor independiente[cite: 20, 25]. |
+| **Autenticación** | JWT (OAuth2PasswordBearer) | [cite_start]Control de acceso seguro por tokens de sesión[cite: 20]. |
+| **Contenedores** | Docker + Docker Compose | [cite_start]Orquestación aislada de los servicios[cite: 20]. |
+
+> [cite_start]📁 **Estructura del Proyecto:** La comunicación se centraliza en el cliente HTTP `api.js` (añadiendo tokens JWT en cada cabecera) [cite: 23, 61][cite_start], mientras que el archivo `ui.js` maneja los estados visuales comunes (spinners de carga, alertas de error y guards de autenticación)[cite: 84, 85].
+
+### 3. Reglas de Negocio Clave del Sistema
+[cite_start]Para asegurar la integridad de la base de datos, el backend y el frontend cooperan validando las siguientes restricciones operativas[cite: 69]:
+* [cite_start]**Membresías Únicas:** Un socio solo puede poseer una membresía activa o pendiente de manera simultánea[cite: 41, 70]. [cite_start]No se emiten membresías a socios inactivos[cite: 71].
+* [cite_start]**Protección de Datos:** Se impide la eliminación de un socio que cuente con una membresía activa[cite: 33, 72]. [cite_start]Asimismo, no se puede borrar una membresía si esta ya tiene pagos completados asociados[cite: 46, 73].
+* [cite_start]**Control Financiero:** Los registros de pagos solo admiten modificaciones o eliminaciones dentro de una ventana temporal de 30 minutos posteriores a su creación[cite: 50, 74].
+* [cite_start]**Activación Automática:** Si un pago con estado `completed` cubre la totalidad del precio asignado al plan, la membresía transiciona automáticamente de `pending` a `active`[cite: 75].
+
+### 4. Requisitos de Instalación y Despliegue
+[cite_start]Para desplegar el proyecto en un entorno de desarrollo local, se deben cumplimentar las siguientes fases secuenciales[cite: 107]:
+1. [cite_start]**Clonación y Entorno:** Clonar el repositorio y configurar un entorno virtual de Python (`python -m venv .venv`)[cite: 108].
+2. [cite_start]**Dependencias:** Instalar los paquetes técnicos requeridos (`pip install -r requirements.txt`)[cite: 108].
+3. [cite_start]**Infraestructura Docker:** Levantar el contenedor de la base de datos relacional mediante `docker compose up -d db`[cite: 108].
+4. [cite_start]**Servicios:** Iniciar el backend con Uvicorn (`uvicorn main:app --reload`) y lanzar el frontend mediante la extensión *Live Server* en el puerto 5500[cite: 108].
