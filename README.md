@@ -8,9 +8,16 @@ python -m pip install -r requirements-dev.txt
 python -m pytest -q
 ```
 
-Las pruebas de negocio sustituyen explícitamente la autenticación; los casos de acceso anónimo y token inválido la ejecutan sin esa sustitución. Cada prueba utiliza datos temporales independientes. Los pagos se asocian a una membresía mediante `membership_id`.
+Las pruebas de negocio sustituyen explícitamente la autenticación; las pruebas de seguridad ejecutan el login, los tokens y los permisos reales sin esa sustitución. Cada prueba utiliza datos temporales independientes. Los pagos se asocian a una membresía mediante `membership_id`.
 
 Consulta la [guía de pruebas](docs/testing.md) para entender los casos, la configuración, Actions y las limitaciones pendientes. Las comprobaciones se ejecutan en cada PR y en los pushes a `developer` y `main`; no despliegan la aplicación.
+
+
+## Acceso y cuentas del personal
+
+La API de negocio requiere una cuenta activa y autenticada. Solo los administradores pueden crear cuentas mediante `/api/v1/auth/register`. La primera cuenta administradora se prepara desde una terminal de confianza con `python -m app.scripts.create_admin`, después de aplicar las migraciones.
+
+Consulta la [guía de autenticación](docs/authentication.md) para instalar las dependencias, configurar la clave de firma, preparar el administrador, entender los códigos `401` y `403` y conocer las limitaciones pendientes. Tras actualizar esta mejora hay que iniciar sesión de nuevo.
 
 ---
 
