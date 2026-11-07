@@ -1,3 +1,5 @@
+import pytest
+
 from datetime import date
 
 from fastapi.testclient import TestClient
@@ -5,6 +7,9 @@ from sqlmodel import Session
 
 from app.models.member import Member
 from app.models.reservation import Reservation, ReservationStatus
+
+
+pytestmark = pytest.mark.usefixtures("auth_headers")
 
 
 def test_register_attendance_success(

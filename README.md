@@ -1,19 +1,16 @@
 # Project-CRUD-Python-G2
-## 🧪 Cobertura de Calidad y Testing
+## 🧪 Pruebas automatizadas
 
-El backend de **Iron Pulse** cuenta con una capa de pruebas automatizadas que garantizan la estabilidad del software y previenen regresiones en entornos de producción. Las pruebas se dividen en dos enfoques estratégicos:
+La suite combina pruebas unitarias de servicios y pruebas de endpoints con FastAPI TestClient y SQLite en memoria. Las migraciones se validan por separado sobre PostgreSQL 15 en GitHub Actions.
 
-### 1. Pruebas de Integración (Endpoints API)
-Utilizando `TestClient` de FastAPI, se simulan peticiones HTTP reales para verificar el comportamiento de los controladores, el enrutamiento y la consistencia de las respuestas de la base de datos:
-* **Gestión de Miembros (`test_member.py`):** Validación del flujo de registro (HTTP 201), control de excepciones por correos duplicados (HTTP 409) y consultas de perfiles existentes (HTTP 200).
-* **Planes de Suscripción (`test_plan.py`):** Verificación de la persistencia de nuevas tarifas y captura controlada de errores en solicitudes de planes inexistentes (HTTP 404).
-* **Transacciones Financieras (`test_payment.py`):** Automatización de auditorías de cobros vinculados directamente al identificador único del socio.
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+```
 
-### 2. Pruebas Unitarias Aisladas (Capa de Servicios)
-Para testear la lógica algorítmica de negocio de manera pura y sin dependencias de infraestructura, se utiliza `unittest.mock` (`MagicMock`), aislando por completo el acceso a la base de datos física:
-* **Servicio de Socios (`test_member_service.py`):** Pruebas funcionales sobre las reglas de negocio de altas, bajas y penalizaciones.
-* **Servicio de Accesos (`test_attendance_service.py`):** Verificación del motor de validación de entradas que cruza los datos de asistencia con la vigencia del plan de suscripción del socio.
-* **Servicio de Analítica (`test_report_service.py`):** Pruebas de carga lógica sobre las funciones encargadas de procesar estadísticas agregadas financieras y de aforo.
+Las pruebas de negocio sustituyen explícitamente la autenticación; los casos de acceso anónimo y token inválido la ejecutan sin esa sustitución. Cada prueba utiliza datos temporales independientes. Los pagos se asocian a una membresía mediante `membership_id`.
+
+Consulta la [guía de pruebas](docs/testing.md) para entender los casos, la configuración, Actions y las limitaciones pendientes. Las comprobaciones se ejecutan en cada PR y en los pushes a `developer` y `main`; no despliegan la aplicación.
 
 ---
 
