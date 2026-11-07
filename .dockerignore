@@ -1,0 +1,19 @@
+# Send only the sources required by the API and frontend images.
+# Git, .env files, virtual environments, reports and local credentials stay out.
+**
+!requirements.txt
+!main.py
+!alembic.ini
+!app/
+!app/**
+!alembic/
+!alembic/**
+!Frontend/
+!Frontend/**
+!nginx/
+!nginx/Dockerfile
+!nginx/nginx.conf
+app/tests/
+**/__pycache__/
+**/*.pyc
+**/.env*

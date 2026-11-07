@@ -1,8 +1,9 @@
-version: "3.9"
+# Local demonstration. Only Nginx is published, on localhost:8080 by default.
+name: iron-pulse-local
+
 services:
   db:
     image: postgres:15-alpine
-    container_name: gym_db
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME:-gym_db}
@@ -11,74 +12,45 @@ services:
       TZ: Europe/Madrid
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    expose:
-      - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-gymuser} -d ${DB_NAME:-gym_db}"]
-      interval: 10s
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  nginx:
-    image: nginx:alpine
-    container_name: gym_nginx_prod
-    restart: always
-    ports:
-      - "80:80"
-    depends_on:
-      - api
-    command: >
-      sh -c "
-        cat > /etc/nginx/conf.d/default.conf << 'EOF'
-        upstream gymapi { server api:8000; }
-        server {
-          listen 80;
-          server_name _;
-          client_max_body_size 10M;
-          location / {
-            root /usr/share/nginx/html;
-            index login.html;
-            try_files \$$uri \$$uri/ /login.html;
-          }
-          location /api/ {
-            proxy_pass http://gymapi;
-            proxy_set_header Host \$$host;
-            proxy_set_header X-Real-IP \$$remote_addr;
-            proxy_set_header X-Forwarded-For \$$proxy_add_x_forwarded_for;
-          }
-        }
-        EOF
-        nginx -g 'daemon off;'
-      "
+      retries: 10
 
   api:
-    build: .
-    container_name: gym_api
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
-    env_file: .env
     environment:
+      APP_NAME: ${APP_NAME:-Iron Pulse}
+      DEBUG: ${DEBUG:-True}
+      SECRET_KEY: ${SECRET_KEY:-dev-insecure-key-cambiar-en-produccion-minimo-32}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
       DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-gym_db}
+      DB_USER: ${DB_USER:-gymuser}
+      DB_PASSWORD: ${DB_PASSWORD:-gympassword}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
       TZ: Europe/Madrid
-    expose:
-      - "8000"
-    volumes:
-      - .:/app
-      - /app/venv
     depends_on:
       db:
         condition: service_healthy
-    command: >
-      sh -c "
-        echo '⏳ Running Alembic migrations...' &&
-        alembic upgrade head &&
-        echo '🚀 Starting FastAPI...' &&
-        uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-      "
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   postgres_data:
-
-networks:
-  default:
-    name: gym_network

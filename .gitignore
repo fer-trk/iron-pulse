@@ -5,6 +5,9 @@ env/
 
 # Variables de entorno — NUNCA al repo
 .env
+.env.*
+!.env.example
+!.env.production.example
 
 # Python cache
 __pycache__/

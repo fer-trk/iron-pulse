@@ -114,3 +114,12 @@ esté terminado. Quedan para mejoras posteriores:
 La mejora de autenticación migró la configuración a `SettingsConfigDict` y eliminó
 la advertencia de Pydantic. La [guía de autenticación](authentication.md) detalla
 los controles y los límites actuales.
+
+
+## Prueba del despliegue Docker
+
+El workflow `Docker deployment` construye y levanta los tres servicios usando
+cada uno de los archivos Compose. Ejecuta el script de comprobación HTTP contra
+PostgreSQL real y verifica persistencia al recrear la base y reiniciar la API.
+Esta prueba complementa la suite SQLite y la prueba de migraciones; consulta la
+[guía de Docker](docker.md) para su alcance y los requisitos de aislamiento.

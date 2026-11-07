@@ -25,3 +25,16 @@ def test_development_can_use_documented_development_key():
 def test_token_lifetime_must_be_positive(field):
     with pytest.raises(ValidationError):
         Settings(_env_file=None, DEBUG=True, **{field: 0})
+
+
+def test_database_url_preserves_special_characters_in_credentials():
+    from sqlalchemy.engine import make_url
+
+    config = Settings(
+        _env_file=None, DEBUG=True, DATABASE_URL=None,
+        DB_USER="gym@user", DB_PASSWORD="private:p@ss/word%", DB_NAME="gym db",
+    )
+    url = make_url(config.get_database_url())
+    assert url.username == "gym@user"
+    assert url.password == "private:p@ss/word%"
+    assert url.database == "gym db"
