@@ -2,6 +2,7 @@ from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from typing import Optional
+from sqlalchemy.engine import URL
 
 
 DEVELOPMENT_SECRET = "dev-insecure-key-cambiar-en-produccion-minimo-32"
@@ -29,10 +30,11 @@ class Settings(BaseSettings):
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
             return self.DATABASE_URL
-        return (
-            f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?sslmode=disable"
-        )
+        return URL.create(
+            "postgresql", username=self.DB_USER, password=self.DB_PASSWORD,
+            host=self.DB_HOST, port=self.DB_PORT, database=self.DB_NAME,
+            query={"sslmode": "disable"},
+        ).render_as_string(hide_password=False)
 
     @property
     def cors_origins_list(self) -> list[str]:

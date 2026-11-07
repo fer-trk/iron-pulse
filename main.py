@@ -63,5 +63,6 @@ app.include_router(business_router)
 
 
 @app.get("/", tags=["health"])
+@app.get("/api/health", tags=["health"])
 def health():
     return {"status": "ok", "app": settings.APP_NAME, "version": "1.0.0"}

@@ -1,4 +1,17 @@
 # Project-CRUD-Python-G2
+## Ejecutar con Docker
+
+Con Docker Desktop o Docker Engine y Compose v2 activos:
+
+```bash
+docker compose up -d --build --wait --wait-timeout 180
+docker compose exec api python -m app.scripts.create_admin
+```
+
+Abre [Iron Pulse en localhost:8080](http://localhost:8080) e inicia sesión con la cuenta que acabas de preparar. La API está en [localhost:8080/api/docs](http://localhost:8080/api/docs). El primer arranque no requiere `.env`; los datos se guardan en un volumen de PostgreSQL.
+
+La [guía de Docker](docs/docker.md) explica los servicios, persistencia, configuración para servidor, puertos y pruebas de despliegue. El entorno local usa credenciales de desarrollo y se publica solo en loopback por defecto. La configuración para servidor exige secretos privados.
+
 ## 🧪 Pruebas automatizadas
 
 La suite combina pruebas unitarias de servicios y pruebas de endpoints con FastAPI TestClient y SQLite en memoria. Las migraciones se validan por separado sobre PostgreSQL 15 en GitHub Actions.
