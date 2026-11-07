@@ -38,6 +38,7 @@ jobs:
           --health-retries 5
     env:
       DEBUG: "False"
+      SECRET_KEY: ci-only-migration-key-never-use-in-production-2026
       DATABASE_URL: ""
       DB_HOST: localhost
       DB_PORT: "5432"

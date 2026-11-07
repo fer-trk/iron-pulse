@@ -1,4 +1,7 @@
 from datetime import date
+import pytest
+
+pytestmark = pytest.mark.usefixtures("auth_headers")
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session
@@ -171,4 +174,4 @@ def test_attendance_report_invalid_date_range(
 
     assert response.status_code == 400
     assert response.json()["detail"] == "start_date cannot be greater than end_date"
-    
+

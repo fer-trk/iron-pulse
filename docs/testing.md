@@ -41,7 +41,8 @@ el código y el mensaje de error.
 | `test_shift.py`, `test_reservation.py` | Operaciones de clases, capacidad, disponibilidad, creación de reservas y error de clase inexistente. |
 | `test_attendance.py`, `test_attendance_service.py` | Registro, pertenencia de la reserva, cancelaciones, duplicados, consultas y salida. |
 | `test_report.py`, `test_report_service.py` | Resúmenes, agrupaciones por socio o reserva, ausencia de datos y rangos de fechas inválidos. |
-| `test_api_auth.py` | Rechazo de peticiones anónimas a siete rutas protegidas y rechazo de un token inválido. |
+| `test_auth.py`, `test_security_config.py` | Login real, permisos de creación de cuentas, usuarios activos, validación de tokens, hashes anteriores, comando inicial y claves de producción. |
+| `test_api_auth.py` | Rechazo de peticiones anónimas a todas las operaciones de negocio publicadas en OpenAPI y rechazo de un token inválido. |
 
 Las pruebas unitarias de servicios usan `MagicMock`: sustituyen el acceso a datos
 para aislar la lógica. Las de endpoints usan `TestClient`, la aplicación FastAPI
@@ -51,7 +52,7 @@ en pruebas. Los contextos y sustituciones se limpian al terminar cada caso.
 
 Las pruebas de negocio solicitan explícitamente `auth_headers`, que sustituye
 la dependencia de autenticación por un identificador de prueba. Esto permite
-investigar negocio sin mezclar fallos de login. Los casos de `test_api_auth.py`
+investigar negocio sin mezclar fallos de login. Los casos de `test_api_auth.py` y `test_auth.py`
 no usan esa sustitución. No hay una desactivación global de la seguridad.
 
 ## Qué se reparó y por qué
@@ -99,8 +100,9 @@ a datos de trabajo. Ambas validaciones se ejecutan en PR y en pushes a
 Una suite aprobada confirma los casos descritos, no garantiza que el producto
 esté terminado. Quedan para mejoras posteriores:
 
-- Login y registro con contraseñas reales, roles, revocación y protección de
-  informes y otras rutas todavía públicas.
+- Revocación persistente y compartida entre procesos, recuperación de contraseñas
+  y permisos más detallados. El login real, el registro reservado al administrador
+  y la protección de todos los módulos de negocio ya están cubiertos.
 - Relación explícita entre usuario autenticado y socio en las reservas; los
   casos actuales usan deliberadamente un socio cuyo ID coincide con el stub.
 - Coherencia entre `Member.status`, `is_active` y vigencia de la membresía.
@@ -109,5 +111,6 @@ esté terminado. Quedan para mejoras posteriores:
 - Pruebas de negocio sobre PostgreSQL y pruebas de navegador. SQLite no
   reproduce todos los tipos, restricciones o bloqueos de PostgreSQL.
 
-También queda una advertencia por la configuración antigua de Pydantic. No se
-oculta ni se presenta como un error resuelto por esta PR.
+La mejora de autenticación migró la configuración a `SettingsConfigDict` y eliminó
+la advertencia de Pydantic. La [guía de autenticación](authentication.md) detalla
+los controles y los límites actuales.

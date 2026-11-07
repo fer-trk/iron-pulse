@@ -10,6 +10,7 @@ def get_engine():
         _engine = create_engine(
             settings.get_database_url(),
             echo=settings.DEBUG,
+            hide_parameters=True,
             pool_pre_ping=True,
             pool_size=10,
             max_overflow=20,
