@@ -21,7 +21,7 @@ def create_shift(client: TestClient, auth_headers, data=None):
     client.post("/api/v1/shifts/", json=data or SHIFT_DATA, headers=auth_headers)
 
 
-def test_create_reservation(client: TestClient, auth_headers):
+def test_create_reservation(client: TestClient, auth_headers, active_member):
     create_shift(client, auth_headers)
     r = client.post("/api/v1/reservations/", json=RESERVATION_DATA, headers=auth_headers)
     assert r.status_code == 201
@@ -32,4 +32,6 @@ def test_create_reservation(client: TestClient, auth_headers):
 
 
 def test_create_reservation_shift_not_found(client: TestClient, auth_headers):
-    r = client.post("/api/v1/reservation")
+    r = client.post("/api/v1/reservations/", json=RESERVATION_DATA, headers=auth_headers)
+    assert r.status_code == 404
+    assert r.json()["detail"] == "Shift not found"

@@ -1,206 +1,77 @@
-from fastapi.testclient import TestClient
-from sqlmodel import Session
+import pytest
 
-from app.models.member import MemberStatus
+pytestmark = pytest.mark.usefixtures("auth_headers")
 
 
-def test_create_member(client: TestClient):
-    response = client.post(
-        "/api/v1/members/",
-        json={
-            "first_name": "Ana",
-            "last_name": "López",
-            "email": "ana.lopez@gym.es",
-            "phone": "+34600111222",
-        },
-    )
-
+def test_create_plan(client):
+    response = client.post("/api/v1/plans/", json={
+        "name": "Basic", "price": 29.99, "duration_days": 30,
+    })
     assert response.status_code == 201
-
-    data = response.json()
-
-    assert data["id"] is not None
-    assert data["first_name"] == "Ana"
-    assert data["last_name"] == "López"
-    assert data["email"] == "ana.lopez@gym.es"
-    assert data["status"] == MemberStatus.active
+    assert response.json()["name"] == "Basic"
+    assert response.json()["price"] == 29.99
+    assert response.json()["active"] is True
 
 
-def test_create_member_duplicate_email(client: TestClient):
-    payload = {
-        "first_name": "Pedro",
-        "last_name": "Ruiz",
-        "email": "pedro.ruiz@gym.es",
-        "phone": "+34600333444",
-    }
-
-    first_response = client.post("/api/v1/members/", json=payload)
-    second_response = client.post("/api/v1/members/", json=payload)
-
-    assert first_response.status_code == 201
-    assert second_response.status_code == 409
-    assert second_response.json()["detail"] == "Email already registered"
+def test_duplicate_plan_name(client, monthly_plan):
+    response = client.post("/api/v1/plans/", json={
+        "name": monthly_plan.name, "price": 10,
+    })
+    assert response.status_code == 409
 
 
-def test_get_member(client: TestClient):
-    create_response = client.post(
-        "/api/v1/members/",
-        json={
-            "first_name": "Luis",
-            "last_name": "Martínez",
-            "email": "luis.martinez@gym.es",
-            "phone": "+34600555666",
-        },
-    )
+@pytest.mark.parametrize("field,value", [("price", -1), ("duration_days", 0)])
+def test_invalid_plan(client, field, value):
+    response = client.post("/api/v1/plans/", json={
+        "name": "Invalid", "price": 10, field: value,
+    })
+    assert response.status_code == 422
 
-    member_id = create_response.json()["id"]
 
-    response = client.get(f"/api/v1/members/{member_id}")
-
+def test_get_plan(client, monthly_plan):
+    response = client.get(f"/api/v1/plans/{monthly_plan.id}")
     assert response.status_code == 200
-
-    data = response.json()
-
-    assert data["id"] == member_id
-    assert data["first_name"] == "Luis"
-    assert data["email"] == "luis.martinez@gym.es"
+    assert response.json()["id"] == monthly_plan.id
+    assert response.json()["name"] == monthly_plan.name
 
 
-def test_get_member_not_found(client: TestClient):
-    response = client.get("/api/v1/members/999")
-
+def test_get_plan_not_found(client):
+    response = client.get("/api/v1/plans/999")
     assert response.status_code == 404
-    assert response.json()["detail"] == "Member not found"
+    assert response.json()["detail"] == "Plan not found"
 
 
-def test_list_members_with_pagination(client: TestClient):
-    for i in range(3):
-        client.post(
-            "/api/v1/members/",
-            json={
-                "first_name": f"Member{i}",
-                "last_name": "Test",
-                "email": f"member{i}.pagination@gym.es",
-                "phone": f"+3460077700{i}",
-            },
-        )
-
-    response = client.get("/api/v1/members/?offset=0&limit=2")
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert isinstance(data, list)
-    assert len(data) == 2
-
-
-def test_update_member(client: TestClient):
-    create_response = client.post(
-        "/api/v1/members/",
-        json={
-            "first_name": "Sofía",
-            "last_name": "Fernández",
-            "email": "sofia.fernandez@gym.es",
-            "phone": "+34600888999",
-        },
-    )
-
-    member_id = create_response.json()["id"]
-
-    response = client.patch(
-        f"/api/v1/members/{member_id}",
-        json={"phone": "+34611000111"},
-    )
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert data["phone"] == "+34611000111"
-    assert data["first_name"] == "Sofía"
-
-
-def test_update_member_not_found(client: TestClient):
-    response = client.patch(
-        "/api/v1/members/999",
-        json={"phone": "+34611000111"},
-    )
-
-    assert response.status_code == 404
-    assert response.json()["detail"] == "Member not found"
-
-
-def test_suspend_member(client: TestClient):
-    create_response = client.post(
-        "/api/v1/members/",
-        json={
-            "first_name": "Miguel",
-            "last_name": "Torres",
-            "email": "miguel.torres@gym.es",
-            "phone": "+34600121212",
-        },
-    )
-
-    member_id = create_response.json()["id"]
-
-    response = client.patch(f"/api/v1/members/{member_id}/suspend")
-
-    assert response.status_code == 200
-    assert response.json()["status"] == MemberStatus.suspended
-
-
-def test_suspend_member_not_found(client: TestClient):
-    response = client.patch("/api/v1/members/999/suspend")
-
-    assert response.status_code == 404
-    assert response.json()["detail"] == "Member not found"
-
-
-def test_reactivate_member(client: TestClient, session: Session):
-    from app.models.member import Member
-
-    member = Member(
-        first_name="Inactivo",
-        last_name="Test",
-        email="inactivo.test@gym.es",
-        phone="+34600131313",
-        status=MemberStatus.suspended,
-    )
-    session.add(member)
+def test_list_active_plans(client, session, monthly_plan):
+    from app.models.plan import Plan
+    session.add(Plan(name="Retired", price=10, active=False))
     session.commit()
-    session.refresh(member)
-
-    response = client.patch(f"/api/v1/members/{member.id}/reactivate")
-
+    response = client.get("/api/v1/plans/?active=true")
     assert response.status_code == 200
-    assert response.json()["status"] == MemberStatus.active
+    assert [p["id"] for p in response.json()] == [monthly_plan.id]
 
 
-def test_delete_member(client: TestClient):
-    create_response = client.post(
-        "/api/v1/members/",
-        json={
-            "first_name": "Borrar",
-            "last_name": "Me",
-            "email": "borrar.me@gym.es",
-            "phone": "+34600141414",
-        },
-    )
-
-    member_id = create_response.json()["id"]
-
-    response = client.delete(f"/api/v1/members/{member_id}")
-
+def test_update_plan(client, monthly_plan):
+    response = client.patch(f"/api/v1/plans/{monthly_plan.id}", json={"price": 35})
     assert response.status_code == 200
-
-    get_response = client.get(f"/api/v1/members/{member_id}")
-
-    assert get_response.status_code == 404
+    assert response.json()["price"] == 35
+    assert response.json()["name"] == monthly_plan.name
 
 
-def test_delete_member_not_found(client: TestClient):
-    response = client.delete("/api/v1/members/999")
+def test_update_plan_not_found(client):
+    assert client.patch("/api/v1/plans/999", json={"price": 35}).status_code == 404
 
-    assert response.status_code == 404
-    assert response.json()["detail"] == "Member not found"
+
+def test_delete_plan(client, monthly_plan):
+    response = client.delete(f"/api/v1/plans/{monthly_plan.id}")
+    assert response.status_code == 200
+    assert client.get(f"/api/v1/plans/{monthly_plan.id}").status_code == 404
+
+
+def test_delete_plan_with_memberships_is_rejected(client, monthly_plan, active_membership):
+    response = client.delete(f"/api/v1/plans/{monthly_plan.id}")
+    assert response.status_code == 400
+    assert client.get(f"/api/v1/plans/{monthly_plan.id}").status_code == 200
+
+
+def test_delete_plan_not_found(client):
+    assert client.delete("/api/v1/plans/999").status_code == 404
