@@ -17,7 +17,7 @@ function environment(file) {
       return elements.get(id);
     },
   };
-  const context = vm.createContext({ document, console, Date,
+  const context = vm.createContext({ document, console, Date, escapeHtml: value => String(value),
     Option: function(text, value) { this.text = text; this.value = value; this.dataset = {}; },
     bootstrap: { Modal: class { show() {} } },
     getData: async path => {
@@ -49,4 +49,32 @@ test("payment selector uses custom catalog instead of invented prices", async ()
   assert.match(html, /Actual custom plan/);
   assert.match(html, /49.99/);
   assert.doesNotMatch(html, /Mensual|Semestral|Anual/);
+});
+
+
+test("apostrophes and HTML in member names do not break edit actions", () => {
+  const { context, document } = environment("Frontend/js/members.js");
+  context.escapeHtml = value => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("'", "&#39;");
+  vm.runInContext(`renderMembersTable([{id:17,first_name:"Ana",last_name:"O'Brien <x>",email:"ana@example.com",phone:"",is_active:true}])`, context);
+  const html = document.getElementById("members-table-container").innerHTML;
+  assert.match(html, /O&#39;Brien &lt;x&gt;/);
+  assert.match(html, /editRenderedRecord\(17\)/);
+  vm.runInContext("editRenderedRecord(17)", context);
+  assert.equal(document.getElementById("editMemberLastName").value, "O'Brien <x>");
+});
+
+test("login preserves password spaces and uses a single token key", async () => {
+  const { context, document } = environment("Frontend/js/auth.js");
+  const stored = new Map(); let submitted;
+  context.API_BASE_URL = "/api/v1";
+  context.URLSearchParams = URLSearchParams;
+  context.window = {location:{pathname:"/login.html",href:""}};
+  context.localStorage = {setItem:(key,value)=>stored.set(key,value)};
+  context.fetch = async (url, options) => { submitted = options.body; return {ok:true,json:async()=>({access_token:"test-token",token_type:"bearer"})}; };
+  document.getElementById("username").value = "admin";
+  document.getElementById("password").value = "  password-with-spaces  ";
+  await vm.runInContext("handleLogin({preventDefault(){}})", context);
+  assert.equal(submitted.get("password"), "  password-with-spaces  ");
+  assert.equal(stored.get("access_token"), "test-token");
+  assert.equal(stored.has("ironPulseToken"), false);
 });

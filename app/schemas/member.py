@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from datetime import datetime
 from typing import Optional
 from sqlmodel import SQLModel, Field
@@ -21,6 +22,14 @@ class MemberUpdate(SQLModel):
     email: Optional[str] = Field(default=None, max_length=150)
     phone: Optional[str] = None
     is_active: Optional[bool] = None
+
+
+    @field_validator("first_name", "last_name", "email", "is_active")
+    @classmethod
+    def reject_null_updates(cls, value):
+        if value is None:
+            raise ValueError("This field cannot be null")
+        return value
 
 
 class MemberRead(MemberBase):

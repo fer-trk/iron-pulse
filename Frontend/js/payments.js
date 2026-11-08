@@ -1,3 +1,4 @@
+let renderedRecords = new Map();
 document.addEventListener("DOMContentLoaded", loadPayments);
 
 let PLAN_PRICES = {};
@@ -36,6 +37,7 @@ async function loadPayments() {
 }
 
 function renderPaymentsTable(payments, membershipMemberMap = {}) {
+    renderedRecords = new Map((payments || []).map(r => [r.id, r]));
     const container = document.getElementById("payments-table-container");
 
     if (!payments || payments.length === 0) {
@@ -72,15 +74,15 @@ function renderPaymentsTable(payments, membershipMemberMap = {}) {
                             <td>${formatCurrency(p.amount)}</td>
                             <td>${formatDate(p.payment_date)}</td>
                             <td class="text-capitalize">${p.payment_method || "-"}</td>
-                            <td>${p.reference || "-"}</td>
+                            <td>${escapeHtml(p.reference || "-")}</td>
                             <td>${renderPaymentBadge(p.status)}</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary me-1"
-                                    onclick="openEditModal(${p.id}, '${p.status}', '${p.reference || ''}', '${p.notes || ''}')">
+                                    onclick="editRenderedRecord(${p.id})">
                                     <i class="bi bi-pencil"></i> Edit
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger"
-                                    onclick="confirmDeletePayment(${p.id})">
+                                    onclick="deleteRenderedRecord(${p.id})">
                                     <i class="bi bi-trash"></i> Delete
                                 </button>
                             </td>
@@ -131,7 +133,7 @@ async function openAddModal() {
                     const planName   = PLAN_NAMES[ms.plan_id] || `Plan ${ms.plan_id}`;
                     const price      = PLAN_PRICES[ms.plan_id] || "";
                     return `<option value="${ms.id}" data-price="${price}">
-                        #${ms.id} — ${memberName} · ${planName}${price ? ` (€${price})` : ""}
+                        #${ms.id} — ${escapeHtml(memberName)} · ${escapeHtml(planName)}${price ? ` (€${price})` : ""}
                     </option>`;
                 }).join("");
         }
@@ -250,3 +252,6 @@ async function submitDeletePayment() {
         errorDiv.classList.remove("d-none");
     }
 }
+
+function editRenderedRecord(id) { const r = renderedRecords.get(id); if (r) openEditModal(...[r.id, r.status, r.reference || "", r.notes || ""]); }
+function deleteRenderedRecord(id) { const r = renderedRecords.get(id); if (r) confirmDeletePayment(r.id); }

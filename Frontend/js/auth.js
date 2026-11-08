@@ -5,6 +5,9 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("login-form");
+    if (!loginForm && window.location.pathname.endsWith("login.html")) {
+        document.addEventListener("keydown", event => { if (event.key === "Enter") handleLogin(event); });
+    }
     if (loginForm) {
         loginForm.addEventListener("submit", handleLogin);
     }
@@ -17,7 +20,7 @@ async function handleLogin(event) {
     event.preventDefault();
 
     const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const password = document.getElementById("password").value;
     const errorDiv = document.getElementById("login-error");
 
     if (!username || !password) {
@@ -62,8 +65,10 @@ async function handleLogin(event) {
 /**
  * Logs out the user by clearing local storage
  */
-function logout() {
+async function logout() {
+    try { await postData("/auth/logout", {}); } catch (error) { console.warn("Session ended locally", error.message); }
     localStorage.removeItem("access_token");
+    localStorage.removeItem("ironPulseToken");
     localStorage.removeItem("token_type");
     localStorage.removeItem("username");
     window.location.href = "login.html";

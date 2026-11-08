@@ -17,7 +17,6 @@ from app.models.membership import Membership
 from app.models.payment import Payment
 from app.models.shift import AvailableShift
 from app.models.reservation import Reservation
-from app.models.attendance import Attendance
 from app.models.user import User
 from app.core.security import hash_password
 from app.db.session import get_engine

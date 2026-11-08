@@ -154,7 +154,7 @@ crear datos de prueba en una instalación de trabajo. Comprueba:
 - Página de login, CSS, JavaScript, logo, Swagger y estado de API a través de Nginx.
 - 404 para archivos ausentes o privados y rechazo de acceso anónimo a socios.
 - Preparación del administrador, login real y creación de socio, plan, membresía
-  y pago contra PostgreSQL.
+  y pago contra PostgreSQL, seguido de inscripción a clase, cancelación y reinscripción.
 - Informes con un token válido, usuario de API sin privilegios y exclusión de
   archivos privados en la imagen.
 - Persistencia al recrear el contenedor de PostgreSQL sin borrar su volumen y

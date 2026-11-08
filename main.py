@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.security import get_current_user_sub
-from app.routers.attendance import router as attendance_router
 from app.routers.member import router as member_router
 from app.routers.membership import router as membership_router
 from app.routers.payment import router as payment_router
@@ -56,7 +55,7 @@ business_router = APIRouter(
 )
 for router in (
     plan_router, member_router, membership_router, payment_router,
-    attendance_router, shifts_router, reservations_router, report_router,
+    shifts_router, reservations_router, report_router,
 ):
     business_router.include_router(router)
 app.include_router(business_router)

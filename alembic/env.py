@@ -12,7 +12,6 @@ from app.models.membership import Membership  # noqa: F401
 from app.models.payment import Payment  # noqa: F401
 from app.models.shift import AvailableShift  # noqa: F401
 from app.models.reservation import Reservation  # noqa: F401
-from app.models.attendance import Attendance  # noqa: F401
 from app.models.user import User  # noqa: F401
 
 config = context.config

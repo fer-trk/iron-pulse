@@ -1,3 +1,4 @@
+let renderedRecords = new Map();
 document.addEventListener("DOMContentLoaded", loadPlans);
 
 async function loadPlans() {
@@ -12,6 +13,7 @@ async function loadPlans() {
 }
 
 function renderPlansTable(plans) {
+    renderedRecords = new Map((plans || []).map(r => [r.id, r]));
     const container = document.getElementById("plans-table-container");
     if (!plans || plans.length === 0) {
         container.innerHTML = `
@@ -40,8 +42,8 @@ function renderPlansTable(plans) {
                     ${plans.map(p => `
                         <tr>
                             <td>${p.id}</td>
-                            <td class="fw-semibold">${p.name}</td>
-                            <td>${p.description || "-"}</td>
+                            <td class="fw-semibold">${escapeHtml(p.name)}</td>
+                            <td>${escapeHtml(p.description || "-")}</td>
                             <td>${formatCurrency(p.price)}</td>
                             <td>${p.duration_days} days</td>
                             <td>${p.active
@@ -50,11 +52,11 @@ function renderPlansTable(plans) {
                             }</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary me-1"
-                                    onclick="openEditModal(${p.id}, '${p.name.replace(/'/g, "\\'")}', '${(p.description || '').replace(/'/g, "\\'")}', ${p.price}, ${p.duration_days}, ${p.active})">
+                                    onclick="editRenderedRecord(${p.id})">
                                     <i class="bi bi-pencil"></i> Edit
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger"
-                                    onclick="confirmDelete(${p.id}, '${p.name.replace(/'/g, "\\'")}')">
+                                    onclick="deleteRenderedRecord(${p.id})">
                                     <i class="bi bi-trash"></i> Delete
                                 </button>
                             </td>
@@ -161,3 +163,6 @@ async function submitDeletePlan() {
         errorDiv.classList.remove("d-none");
     }
 }
+
+function editRenderedRecord(id) { const r = renderedRecords.get(id); if (r) openEditModal(...[r.id, r.name, r.description || "", r.price, r.duration_days, r.active]); }
+function deleteRenderedRecord(id) { const r = renderedRecords.get(id); if (r) confirmDelete(r.id, r.name); }

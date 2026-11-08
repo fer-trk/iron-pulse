@@ -21,10 +21,14 @@ Un importe omitido o null usa el precio del plan. Importes no positivos, con má
 de dos decimales o fuera de rango se rechazan. Los socios inactivos no reciben
 nuevas membresías. Los formularios usan planes y precios reales de la API.
 
-## Futuras mejoras, fuera de la aplicación inicial
+## Inscripción a clases
 
-- Cobranza integrada con un proveedor de pagos.
-- Emisión de facturas.
-- Registro de asistencia mediante QR del socio, visible para el administrador.
+Un empleado selecciona el socio explícitamente: su ID de usuario nunca se usa
+como ID del socio. Se exige membresía pagada y válida para la fecha de clase,
+socio y clase activos, día semanal correcto y aforo disponible. Cancelar libera
+la plaza y reinscribirse reutiliza el registro, evitando errores de unicidad.
+Las clases con historial se desactivan en lugar de borrarse.
 
-La inscripción a una clase es una reserva de plaza, no una prueba de asistencia.
+La inscripción no registra presencia. Se retiran las rutas, servicios y pantallas
+de asistencias; los datos históricos se mantienen únicamente en la base y las
+migraciones existentes. Las mejoras futuras están enumeradas en el README.

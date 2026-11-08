@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
@@ -22,6 +23,14 @@ class PlanUpdate(SQLModel):
     description: Optional[str] = None
     duration_days: Optional[int] = Field(default=None, gt=0)
     active: Optional[bool] = None
+
+
+    @field_validator("name", "price", "duration_days", "active")
+    @classmethod
+    def reject_null_updates(cls, value):
+        if value is None:
+            raise ValueError("This field cannot be null")
+        return value
 
 
 class PlanResponse(PlanBase):

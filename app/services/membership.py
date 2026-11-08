@@ -80,6 +80,10 @@ class MembershipService:
         current = MembershipService.get_by_id(session, membership_id)
         if current.status not in [MembershipStatus.active, MembershipStatus.expired]:
             raise HTTPException(status_code=400, detail="Only active or expired memberships can be renewed")
+        from ..models.member import Member
+        member = session.get(Member, current.member_id)
+        if not member or not member.is_active or member.status != MemberStatus.active:
+            raise HTTPException(400, "Inactive members cannot renew memberships")
         plan = session.get(Plan, current.plan_id)
         if not plan:
             raise HTTPException(status_code=404, detail="Plan not found")

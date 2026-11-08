@@ -35,3 +35,8 @@ def test_expiring_soon(client, auth_headers, active_membership):
     r = client.get("/api/v1/memberships/expiring-soon?days=35", headers=auth_headers)
     assert r.status_code == 200
     assert len(r.json()) >= 1
+
+def test_inactive_member_cannot_renew(client, auth_headers, session, active_member, active_membership):
+    active_member.is_active = False
+    session.add(active_member); session.commit()
+    assert client.post(f"/api/v1/memberships/{active_membership.id}/renew").status_code == 400

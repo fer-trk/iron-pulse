@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from datetime import time, datetime, date
 from typing import Optional
 from sqlmodel import SQLModel, Field
@@ -26,6 +27,14 @@ class ShiftUpdate(SQLModel):
     end_time: Optional[time] = None
     max_capacity: Optional[int] = Field(default=None, gt=0)
     active_slot: Optional[bool] = None
+
+
+    @field_validator("class_name", "instructor", "day_of_week", "start_time", "end_time", "max_capacity", "active_slot")
+    @classmethod
+    def reject_null_updates(cls, value):
+        if value is None:
+            raise ValueError("This field cannot be null")
+        return value
 
 
 class ShiftRead(ShiftBase):
