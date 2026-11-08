@@ -45,6 +45,7 @@ class Membership(SQLModel, table=True):
         today = date.today()
         return (
             self.status == MembershipStatus.active
+            and self.end_date is not None
             and self.start_date <= today <= self.end_date
         )
 

@@ -14,6 +14,21 @@ logger = logging.getLogger("gymapi")
 class PaymentService:
 
     @staticmethod
+    def sync_membership(session: Session, membership_id: int) -> None:
+        from ..models.plan import Plan
+        membership = session.get(Membership, membership_id)
+        if membership.status in {MembershipStatus.cancelled, MembershipStatus.expired}:
+            return
+        plan = session.get(Plan, membership.plan_id)
+        payments = session.exec(select(Payment).where(
+            Payment.membership_id == membership_id, Payment.status == PaymentStatus.completed,
+        )).all()
+        total = sum((p.amount for p in payments), Decimal("0.00"))
+        membership.status = MembershipStatus.active if total >= plan.price else MembershipStatus.pending
+        membership.updated_at = datetime.utcnow()
+        session.add(membership)
+
+    @staticmethod
     def get_all(session: Session, status=None, method=None, membership_id=None,
                 skip: int = 0, limit: int = 20) -> list[Payment]:
         q = select(Payment)
@@ -48,25 +63,15 @@ class PaymentService:
                 raise HTTPException(status_code=404, detail="Plan not found")
             data = data.model_copy(update={"amount": Decimal(str(plan.price))})
 
+        if data.amount <= 0:
+            raise HTTPException(status_code=400, detail="Payment amount must be positive")
+
         payment = Payment.model_validate(data)
         session.add(payment)
         session.flush()
 
-        if payment.status == PaymentStatus.completed and membership.status == MembershipStatus.pending:
-            previous_payments = session.exec(
-                select(Payment).where(
-                    Payment.membership_id == membership.id,
-                    Payment.status == PaymentStatus.completed,
-                    Payment.id != payment.id
-                )
-            ).all()
-            total = sum(p.amount for p in previous_payments) + payment.amount
-            plan = session.get(Plan, membership.plan_id)
-            if plan and total >= plan.price:
-                membership.status = MembershipStatus.active
-                membership.updated_at = datetime.utcnow()
-                session.add(membership)
-                logger.info(f"Membership {membership.id} automatically activated via full payment")
+        if payment.status == PaymentStatus.completed:
+            PaymentService.sync_membership(session, membership.id)
 
         session.commit()
         session.refresh(payment)
@@ -75,9 +80,13 @@ class PaymentService:
     @staticmethod
     def update(session: Session, payment_id: int, data: PaymentUpdate) -> Payment:
         payment = PaymentService.get_by_id(session, payment_id)
+        old_status = payment.status
         for key, value in data.model_dump(exclude_unset=True).items():
             setattr(payment, key, value)
         session.add(payment)
+        session.flush()
+        if old_status == PaymentStatus.completed or payment.status == PaymentStatus.completed:
+            PaymentService.sync_membership(session, payment.membership_id)
         session.commit()
         session.refresh(payment)
         logger.info(f"Payment {payment_id} updated")
@@ -115,6 +124,11 @@ class PaymentService:
                 status_code=400,
                 detail="Payment can only be deleted within 30 minutes of creation."
             )
+        membership_id = payment.membership_id
+        completed = payment.status == PaymentStatus.completed
         session.delete(payment)
+        session.flush()
+        if completed:
+            PaymentService.sync_membership(session, membership_id)
         session.commit()
         logger.info(f"Payment {payment_id} deleted")

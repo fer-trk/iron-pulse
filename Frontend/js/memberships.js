@@ -9,8 +9,8 @@ async function loadMemberships() {
   try {
     // Carga memberships y members en paralelo
     const [memberships, members] = await Promise.all([
-      getData("/memberships/"),
-      getData("/members/")
+      getAllData("/memberships/"),
+      getAllData("/members/")
     ]);
 
     // Construye un mapa id → nombre
@@ -124,19 +124,17 @@ async function openAddModal() {
   memberSelect.innerHTML = `<option value="">Loading members...</option>`;
 
   try {
-    const members = await getData("/members/");
-    memberSelect.innerHTML = members && members.length
-      ? `<option value="">Select a member...</option>` +
-        members.map(m => {
-          const hasActive = existingMemberships.find(
-            ms => ms.member_id === m.id && ["active", "pending"].includes(ms.status)
-          );
-          const label = hasActive
-            ? `${m.id} — ${m.first_name} ${m.last_name} ⚠ already has membership`
-            : `${m.id} — ${m.first_name} ${m.last_name}`;
-          return `<option value="${m.id}" ${hasActive ? 'disabled style="color:#888"' : ""}>${label}</option>`;
-        }).join("")
-      : `<option value="">No members found</option>`;
+    const [members, plans] = await Promise.all([getAllData("/members/"), getData("/plans/?active=true")]);
+    memberSelect.replaceChildren(new Option("Select a member...", ""));
+    members.filter(m => m.is_active).forEach(m => memberSelect.add(new Option(`${m.id} — ${m.first_name} ${m.last_name}`, m.id)));
+    const planSelect = document.getElementById("membershipPlanId");
+    planSelect.replaceChildren(new Option(plans.length ? "Select a plan..." : "Create an active plan first", ""));
+    plans.forEach(p => {
+      const option = new Option(p.name, p.id);
+      option.dataset.price = p.price;
+      option.dataset.duration = p.duration_days;
+      planSelect.add(option);
+    });
   } catch {
     memberSelect.innerHTML = `<option value="">Could not load members</option>`;
   }

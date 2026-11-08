@@ -61,3 +61,12 @@ async function patchData(endpoint, data) {
 async function deleteData(endpoint) {
   return apiRequest(endpoint, { method: "DELETE" });
 }
+// Follow API pagination so selectors do not silently omit members after page 1.
+async function getAllData(endpoint) {
+  const rows = [];
+  for (let skip = 0; ; skip += 100) {
+    const page = await getData(`${endpoint}${endpoint.includes("?") ? "&" : "?"}skip=${skip}&limit=100`);
+    rows.push(...page);
+    if (page.length < 100) return rows;
+  }
+}

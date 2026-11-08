@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", loadPayments);
 
-const PLAN_PRICES = { 1: 30, 2: 150, 3: 270 };
-const PLAN_NAMES  = { 1: "Mensual", 2: "Semestral", 3: "Anual" };
+let PLAN_PRICES = {};
+let PLAN_NAMES = {};
 
 // Cache de members para mostrar nombres
 let membersMap = {};
@@ -10,12 +10,12 @@ async function loadPayments() {
     showLoading("payments-table-container");
     try {
         const [payments, members] = await Promise.all([
-            getData("/payments/"),
-            getData("/members/")
+            getAllData("/payments/"),
+            getAllData("/members/")
         ]);
 
         // Construye mapa membership_id → member_name via memberships
-        const memberships = await getData("/memberships/");
+        const memberships = await getAllData("/memberships/");
         const membershipMemberMap = {};
         (memberships || []).forEach(ms => {
             const member = (members || []).find(m => m.id === ms.member_id);
@@ -108,9 +108,12 @@ async function openAddModal() {
     membershipSelect.innerHTML = `<option value="">Loading memberships...</option>`;
 
     try {
+        const plans = await getData("/plans/");
+        PLAN_PRICES = Object.fromEntries(plans.map(p => [p.id, p.price]));
+        PLAN_NAMES = Object.fromEntries(plans.map(p => [p.id, p.name]));
         const [memberships, members] = await Promise.all([
-            getData("/memberships/"),
-            getData("/members/")
+            getAllData("/memberships/"),
+            getAllData("/members/")
         ]);
 
         // Mapa member_id → nombre
@@ -147,7 +150,7 @@ function onMembershipSelected() {
 
     if (price && select.value !== "") {
         amountField.value    = parseFloat(price).toFixed(2);
-        amountField.readOnly = true;
+        amountField.readOnly = false;
         amountField.classList.add("bg-light");
     } else {
         amountField.value    = "";

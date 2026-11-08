@@ -1,4 +1,5 @@
 import pytest
+from decimal import Decimal
 
 pytestmark = pytest.mark.usefixtures("auth_headers")
 
@@ -9,7 +10,7 @@ def test_create_plan(client):
     })
     assert response.status_code == 201
     assert response.json()["name"] == "Basic"
-    assert response.json()["price"] == 29.99
+    assert Decimal(response.json()["price"]) == Decimal("29.99")
     assert response.json()["active"] is True
 
 
@@ -53,7 +54,7 @@ def test_list_active_plans(client, session, monthly_plan):
 def test_update_plan(client, monthly_plan):
     response = client.patch(f"/api/v1/plans/{monthly_plan.id}", json={"price": 35})
     assert response.status_code == 200
-    assert response.json()["price"] == 35
+    assert Decimal(response.json()["price"]) == Decimal("35")
     assert response.json()["name"] == monthly_plan.name
 
 
