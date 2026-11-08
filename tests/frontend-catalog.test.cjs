@@ -78,3 +78,11 @@ test("login preserves password spaces and uses a single token key", async () => 
   assert.equal(stored.get("access_token"), "test-token");
   assert.equal(stored.has("ironPulseToken"), false);
 });
+
+
+test("login uses a real form and one shared submit handler", () => {
+  const html = readFileSync("Frontend/login.html", "utf8");
+  assert.match(html, /<form id="login-form">/);
+  assert.match(html, /type="submit"/);
+  assert.doesNotMatch(html, /handleLoginClick|onclick="handleLogin/);
+});

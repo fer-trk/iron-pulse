@@ -5,9 +5,6 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("login-form");
-    if (!loginForm && window.location.pathname.endsWith("login.html")) {
-        document.addEventListener("keydown", event => { if (event.key === "Enter") handleLogin(event); });
-    }
     if (loginForm) {
         loginForm.addEventListener("submit", handleLogin);
     }
