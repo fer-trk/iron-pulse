@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     SECRET_KEY: str = DEVELOPMENT_SECRET
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60, gt=0)
-    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, gt=0)
 
     DB_NAME: str = "gym_db"
     DB_USER: str = "gymuser"

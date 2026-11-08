@@ -26,6 +26,11 @@ Esto cubre todos sus métodos y también las nuevas operaciones que se añadan a
 esos routers. El login y la comprobación básica de salud permanecen públicos.
 La documentación OpenAPI también sigue visible; no contiene datos de socios.
 
+La aplicación solo emite tokens de acceso. No existe un endpoint de renovación:
+cuando caducan, se debe iniciar sesión de nuevo. Se ha retirado la opción sin uso
+`REFRESH_TOKEN_EXPIRE_DAYS`; si conservas un `.env` de una versión anterior,
+elimina esa línea antes de arrancar con la configuración actual.
+
 El estado y el permiso se consultan en cada petición. Por tanto, eliminar o
 inactivar una cuenta invalida su acceso con tokens anteriores; retirar el rol
 administrador impide crear cuentas sin esperar a la caducidad del token.

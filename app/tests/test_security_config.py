@@ -21,10 +21,9 @@ def test_development_can_use_documented_development_key():
     assert config.SECRET_KEY == DEVELOPMENT_SECRET
 
 
-@pytest.mark.parametrize("field", ["ACCESS_TOKEN_EXPIRE_MINUTES", "REFRESH_TOKEN_EXPIRE_DAYS"])
-def test_token_lifetime_must_be_positive(field):
+def test_token_lifetime_must_be_positive():
     with pytest.raises(ValidationError):
-        Settings(_env_file=None, DEBUG=True, **{field: 0})
+        Settings(_env_file=None, DEBUG=True, ACCESS_TOKEN_EXPIRE_MINUTES=0)
 
 
 def test_database_url_preserves_special_characters_in_credentials():
