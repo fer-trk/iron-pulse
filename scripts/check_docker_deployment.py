@@ -4,7 +4,7 @@ Start the stack first, then set COMPOSE_PROJECT_NAME, COMPOSE_FILE and HTTP_PORT
 This script creates temporary accounts and data and restarts its API container.
 """
 
-from datetime import date
+from datetime import date, timedelta
 import json
 import os
 import subprocess
@@ -84,11 +84,12 @@ with Session(get_engine()) as session:
     plan = request("/api/v1/plans/", "POST", {
         "name": "Docker check monthly", "price": "49.99", "duration_days": 30,
     }, token, expected=201)
+    request("/api/v1/members/", "POST", {"first_name": "Other", "last_name": "Member", "email": "other@example.test"}, token, expected=201)
     member = request("/api/v1/members/", "POST", {
         "first_name": "Docker", "last_name": "Check", "email": "docker.check@example.test",
     }, token, expected=201)
     membership = request("/api/v1/memberships/", "POST", {
-        "member_id": member["id"], "plan_id": plan["id"], "start_date": str(date.today()),
+        "member_id": member["id"], "plan_id": plan["id"], "start_date": str(date.today() + timedelta(days=1)),
     }, token, expected=201)
     payment = request("/api/v1/payments/", "POST", {
         "membership_id": membership["id"], "amount": "49.99",
@@ -97,6 +98,22 @@ with Session(get_engine()) as session:
     assert payment["membership_id"] == membership["id"]
     assert request(f"/api/v1/memberships/{membership['id']}", token=token)["status"] == "active"
     request("/api/v1/reports/income", token=token)
+    class_date = date.today() + timedelta(days=1)
+    shift = request("/api/v1/shifts/", "POST", {
+        "class_name": "Docker Yoga", "instructor": "Demo instructor",
+        "day_of_week": class_date.strftime("%A").lower(),
+        "start_time": "09:00", "end_time": "10:00", "max_capacity": 3,
+    }, token, expected=201)
+    payload = {"member_id": member["id"], "shift_id": shift["id"], "date": str(class_date)}
+    enrollment = request("/api/v1/reservations/", "POST", payload, token, expected=201)
+    assert enrollment["member_id"] == member["id"] and member["id"] != 1
+    request(f"/api/v1/reservations/{enrollment['id']}/cancel", "PATCH", {}, token)
+    renewed = request("/api/v1/reservations/", "POST", payload, token, expected=201)
+    assert renewed["id"] == enrollment["id"]
+    assert b"Class enrollment" in request("/enrollments.html")
+    request("/attendance.html", expected=404)
+    request("/api/v1/attendances/", token=token, expected=404)
+
 
     compose("exec", "-T", "api", "python", "-c", """
 import os

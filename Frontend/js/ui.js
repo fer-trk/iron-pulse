@@ -186,7 +186,7 @@ function resetForm(formId) {
   }
 
   function getAuthHeaders() {
-    const token = localStorage.getItem("ironPulseToken");
+    const token = localStorage.getItem("access_token");
 
     if (!token) return {};
 
@@ -235,3 +235,6 @@ function resetForm(formId) {
     showToast,
   };
 })();
+function escapeHtml(value) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+}

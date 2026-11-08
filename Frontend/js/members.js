@@ -1,3 +1,4 @@
+let renderedRecords = new Map();
 document.addEventListener("DOMContentLoaded", loadMembers);
 
 async function loadMembers() {
@@ -12,6 +13,7 @@ async function loadMembers() {
 }
 
 function renderMembersTable(members) {
+    renderedRecords = new Map((members || []).map(r => [r.id, r]));
     const container = document.getElementById("members-table-container");
     if (!members || members.length === 0) {
         container.innerHTML = `
@@ -39,9 +41,9 @@ function renderMembersTable(members) {
                     ${members.map(m => `
                         <tr>
                             <td>${m.id}</td>
-                            <td class="fw-semibold">${m.first_name} ${m.last_name}</td>
-                            <td>${m.email}</td>
-                            <td>${m.phone || "-"}</td>
+                            <td class="fw-semibold">${escapeHtml(m.first_name)} ${escapeHtml(m.last_name)}</td>
+                            <td>${escapeHtml(m.email)}</td>
+                            <td>${escapeHtml(m.phone || "-")}</td>
                             <td>
                                 <span class="badge ${m.is_active ? 'badge-soft-success' : 'badge-soft-danger'}">
                                     ${m.is_active ? 'Active' : 'Inactive'}
@@ -49,11 +51,11 @@ function renderMembersTable(members) {
                             </td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary me-1"
-                                    onclick="openEditModal(${m.id}, '${m.first_name}', '${m.last_name}', '${m.email}', '${m.phone || ''}', ${m.is_active})">
+                                    onclick="editRenderedRecord(${m.id})">
                                     <i class="bi bi-pencil"></i> Edit
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger"
-                                    onclick="confirmDelete(${m.id}, '${m.first_name} ${m.last_name}')">
+                                    onclick="deleteRenderedRecord(${m.id})">
                                     <i class="bi bi-trash"></i> Delete
                                 </button>
                             </td>
@@ -175,3 +177,6 @@ async function submitDeleteMember() {
         errorDiv.classList.remove("d-none");
     }
 }
+
+function editRenderedRecord(id) { const r = renderedRecords.get(id); if (r) openEditModal(...[r.id, r.first_name, r.last_name, r.email, r.phone || "", r.is_active]); }
+function deleteRenderedRecord(id) { const r = renderedRecords.get(id); if (r) confirmDelete(r.id, `${r.first_name} ${r.last_name}`); }

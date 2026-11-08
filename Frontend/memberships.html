@@ -15,15 +15,7 @@
         <a class="navbar-brand brand" href="index.html"><img src="assets/img/iron-pulse-logo.png" alt="Iron Pulse" class="navbar-logo" /></a>
         <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#ironPulseNavbar"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="ironPulseNavbar">
-          <ul class="navbar-nav navigation-menu ms-auto">
-            <li class="nav-item"><a class="nav-link" href="members.html">Members</a></li>
-            <li class="nav-item"><a class="nav-link" href="plans.html">Plans</a></li>
-            <li class="nav-item"><a class="nav-link active" href="memberships.html">Memberships</a></li>
-            <li class="nav-item"><a class="nav-link" href="classes.html">Classes</a></li>
-            <li class="nav-item"><a class="nav-link" href="payments.html">Payments</a></li>
-            <li class="nav-item"><a class="nav-link" href="reports.html">Reports</a></li>
-            <li class="nav-item"><a class="nav-link" href="#" onclick="localStorage.clear(); window.location.href='login.html'"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-          </ul>
+          <ul class="navbar-nav navigation-menu ms-auto"><li class="nav-item"><a class="nav-link " href="members.html">Members</a></li><li class="nav-item"><a class="nav-link " href="plans.html">Plans</a></li><li class="nav-item"><a class="nav-link active" href="memberships.html">Memberships</a></li><li class="nav-item"><a class="nav-link " href="classes.html">Classes</a></li><li class="nav-item"><a class="nav-link " href="enrollments.html">Class enrollment</a></li><li class="nav-item"><a class="nav-link " href="payments.html">Payments</a></li><li class="nav-item"><a class="nav-link " href="reports.html">Income</a></li><li class="nav-item"><a class="nav-link" href="login.html" onclick="logout(); return false;">Logout</a></li></ul>
           <div class="navbar-actions"><a class="nav-cta" href="index.html">DASHBOARD <i class="bi bi-arrow-right"></i></a></div>
         </div>
       </div>
@@ -178,6 +170,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/api.js"></script>
+<script src="js/auth.js"></script>
   <script src="js/memberships.js"></script>
 </body>
 </html>

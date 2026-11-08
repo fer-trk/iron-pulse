@@ -261,11 +261,7 @@ def test_bootstrap_cli_rejects_mismatched_passwords(session, monkeypatch, capsys
     assert PASSWORD not in capsys.readouterr().out
 
 
-@pytest.mark.parametrize("path", [
-    "/api/v1/reports/attendance", "/api/v1/reports/attendance/by-member",
-    "/api/v1/reports/attendance/by-reservation", "/api/v1/reports/attendance/by-shift",
-    "/api/v1/reports/income", "/api/v1/attendances/export-csv",
-])
+@pytest.mark.parametrize("path", ["/api/v1/reports/income", "/api/v1/payments/export-csv"])
 def test_staff_can_access_protected_reports_and_export(client, make_user, path):
     user = make_user()
     assert client.get(path, headers=headers(user)).status_code == 200

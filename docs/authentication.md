@@ -21,7 +21,7 @@ ese permiso para crear cuentas.
 4. La cuenta debe estar activa.
 5. Para crear cuentas, también debe tener `is_admin=true` en la base de datos.
 
-Los ocho módulos de negocio se agrupan en un router protegido en `main.py`.
+Los módulos de negocio se agrupan en un router protegido en `main.py`.
 Esto cubre todos sus métodos y también las nuevas operaciones que se añadan a
 esos routers. El login y la comprobación básica de salud permanecen públicos.
 La documentación OpenAPI también sigue visible; no contiene datos de socios.
@@ -33,14 +33,14 @@ administrador impide crear cuentas sin esperar a la caducidad del token.
 | Operación | Acceso |
 | --- | --- |
 | `POST /api/v1/auth/token` | Público; exige credenciales válidas de una cuenta activa. |
-| Endpoints de socios, planes, membresías, pagos, clases, reservas, asistencias e informes | Cualquier cuenta del personal activa y autenticada. |
+| Endpoints de socios, planes, membresías, pagos, clases, inscripciones e ingresos | Cualquier cuenta del personal activa y autenticada. |
 | `POST /api/v1/auth/register` | Administrador activo y autenticado. Puede crear personal u otros administradores. |
 | `POST /api/v1/auth/logout` | Cuenta activa con token de acceso válido. |
 | `GET /` y documentación de API | Público. |
 
 Esta política es para personal del gimnasio. Todavía no hay un portal de socios
 ni permisos por propietario de cada reserva. `User` y `Member` son entidades
-distintas y su relación se resolverá en otra mejora.
+distintas. El personal selecciona explícitamente al socio al inscribirlo a una clase.
 
 Una autenticación inválida responde `401` con `WWW-Authenticate: Bearer`.
 Una cuenta autenticada sin permiso de administrador recibe `403` al intentar
@@ -123,7 +123,7 @@ tokens caducados o manipulados, claims ausentes, refresh tokens, sujetos inváli
 usuarios eliminados, registro con y sin permisos, duplicados y validación de
 credenciales. Recorre todas las operaciones de negocio del OpenAPI para verificar
 que una petición anónima se rechaza. Además comprueba que el personal pueda
-consultar informes y exportar CSV con un token real, y prueba el comando inicial
+consultar ingresos y exportar cobros con un token real, y prueba el comando inicial
 sin crear cuentas en una base de trabajo.
 
 La configuración de Pydantic se actualizó a `SettingsConfigDict`; las pruebas

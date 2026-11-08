@@ -7,7 +7,6 @@ from sqlalchemy import UniqueConstraint
 if TYPE_CHECKING:
     from .shift import AvailableShift
     from .member import Member
-    from .attendance import Attendance
 
 
 class ReservationStatus(str, Enum):
@@ -27,10 +26,8 @@ class Reservation(SQLModel, table=True):
     shift_id: Optional[int] = Field(default=None, foreign_key="available_shifts.id")
     date: date
     status: ReservationStatus = Field(default=ReservationStatus.confirmed)
-    queue_position: Optional[int] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     member: Optional["Member"] = Relationship(back_populates="reservations")
     shift: Optional["AvailableShift"] = Relationship(back_populates="reservations")
-    attendances: List["Attendance"] = Relationship(back_populates="reservation")

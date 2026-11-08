@@ -1,276 +1,112 @@
 # Iron Pulse
 
-Versión inicial: socios, planes, registro manual de cobros e inscripción a clases. Consulta el [alcance esencial](docs/essential-scope.md). Asistencia por QR, facturación y pagos mediante proveedor quedan para futuras mejoras.
-## Ejecutar con Docker
+<img src="Frontend/assets/img/iron-pulse-logo.png" alt="Iron Pulse" width="180" />
 
-Con Docker Desktop o Docker Engine y Compose v2 activos:
+**Gestión interna de gimnasio:** socios, planes, registro manual de cobros e inscripción a clases.
+
+Proyecto educativo grupal desarrollado originalmente en [Bootcamp-IA-MAD-P7](https://github.com/Bootcamp-IA-MAD-P7/Project2-Grupo2), con una puesta a punto posterior centrada en cerrar los recorridos esenciales. Se conserva el historial de las contribuciones del equipo y cada mejora se explica en una PR.
+
+## Qué hace esta versión
+
+| Módulo | Funcionalidad |
+| --- | --- |
+| Socios | Alta, consulta, edición y desactivación. Los registros con historial no se borran físicamente. |
+| Planes y membresías | Catálogo real con precio y duración; asignación de un plan a un socio activo. |
+| Cobros manuales | Registro de importes y estados. Los pagos completados activan la membresía al cubrir el precio; devoluciones y borrados recalculan su estado. |
+| Clases e inscripciones | Clases semanales con horario y aforo; inscripción de un socio con membresía pagada y vigente para la fecha; cancelación y reinscripción. |
+| Resumen e ingresos | Contadores del sistema y total de cobros completados por intervalo de fechas. |
+
+**Inscribirse a una clase reserva una plaza; no registra asistencia física.** Esta versión no tiene check-in, check-out ni seguimiento de presencia.
+
+## Capturas de la versión esencial
+
+Datos ficticios de la instalación de prueba.
+
+![Resumen de socios, planes, cobros e inscripciones](docs/images/dashboard.jpg)
+
+![Inscripción de un socio a una clase](docs/images/enrollments.jpg)
+
+## Verla en local
+
+Requisitos: Docker Desktop o Docker Engine, contenedores Linux y Compose v2 reciente.
 
 ```bash
 docker compose up -d --build --wait --wait-timeout 180
 docker compose exec api python -m app.scripts.create_admin
 ```
 
-Abre [Iron Pulse en localhost:8080](http://localhost:8080) e inicia sesión con la cuenta que acabas de preparar. La API está en [localhost:8080/api/docs](http://localhost:8080/api/docs). El primer arranque no requiere `.env`; los datos se guardan en un volumen de PostgreSQL.
+El segundo comando prepara la primera cuenta administradora: solicita usuario y contraseña sin mostrarla. La contraseña nueva debe tener al menos 12 caracteres y como máximo 72 bytes UTF-8.
 
-La [guía de Docker](docs/docker.md) explica los servicios, persistencia, configuración para servidor, puertos y pruebas de despliegue. El entorno local usa credenciales de desarrollo y se publica solo en loopback por defecto. La configuración para servidor exige secretos privados.
+- Aplicación: [localhost:8080](http://localhost:8080).
+- API interactiva: [localhost:8080/api/docs](http://localhost:8080/api/docs).
+- Estado de API: [localhost:8080/api/health](http://localhost:8080/api/health).
 
-## 🧪 Pruebas automatizadas
+No hace falta `.env` para la instalación local y no hay credenciales administrativas predeterminadas. Se publican únicamente servicios en loopback; PostgreSQL y la API quedan en la red de Docker. Los datos se conservan en un volumen.
 
-La suite combina pruebas unitarias de servicios y pruebas de endpoints con FastAPI TestClient y SQLite en memoria. Las migraciones se validan por separado sobre PostgreSQL 15 en GitHub Actions.
+```bash
+docker compose down
+```
+
+El apagado normal conserva los datos. `down --volumes` los elimina y se reserva para instalaciones de prueba desechables.
+
+## Recorrido para una entrevista
+
+1. Crear un plan con precio y duración propios.
+2. Registrar un socio y asignarle el plan. La membresía comienza pendiente.
+3. Registrar un cobro completado que cubra el precio; comprobar que se activa. Se admiten pagos parciales.
+4. Crear una clase con día semanal, horario y aforo.
+5. Abrir **Class enrollment**, seleccionar al socio, la clase y una fecha que coincida con su día y esté cubierta por la membresía.
+6. Comprobar la inscripción, cancelarla y volver a inscribir al socio. Consultar el resumen de ingresos.
+
+Los formularios utilizan los planes y socios reales del sistema. Los precios se almacenan con dos decimales exactos. La activación financiera no equivale a procesar un pago bancario: la aplicación registra cobros realizados fuera del sistema.
+
+## Tecnologías y estructura
+
+- **Backend:** Python 3.11, FastAPI, SQLModel/SQLAlchemy, Alembic, PostgreSQL 15.
+- **Frontend:** HTML, CSS, JavaScript y Bootstrap; sin framework de frontend.
+- **Acceso:** JWT, BCrypt y creación de cuentas reservada a administradores.
+- **Ejecución:** Docker Compose y Nginx como servidor de archivos y proxy de API.
+- **Validación:** pytest, pruebas JavaScript y GitHub Actions con PostgreSQL y los dos despliegues Compose.
+
+```text
+Frontend/        Pantallas y JavaScript
+app/             Modelos, esquemas, servicios y API
+alembic/         Historial de migraciones
+tests/           Pruebas de migraciones e integración JavaScript
+scripts/         Verificación de despliegue Docker
+nginx/           Imagen y configuración del frontend
+docs/            Guías de ejecución y decisiones
+```
+
+## Pruebas y flujo de cambios
 
 ```bash
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
+node --test tests/frontend-catalog.test.cjs
 ```
 
-Las pruebas de negocio sustituyen explícitamente la autenticación; las pruebas de seguridad ejecutan el login, los tokens y los permisos reales sin esa sustitución. Cada prueba utiliza datos temporales independientes. Los pagos se asocian a una membresía mediante `membership_id`.
+Las pruebas de negocio usan SQLite temporal y las de acceso ejecutan autenticación real. Actions valida además migraciones y recorridos completos contra PostgreSQL con Docker. Cada PR debe pasar esas comprobaciones antes de integrarse en `developer`. `main` queda reservado para la versión final revisada.
 
-Consulta la [guía de pruebas](docs/testing.md) para entender los casos, la configuración, Actions y las limitaciones pendientes. Las comprobaciones se ejecutan en cada PR y en los pushes a `developer` y `main`; no despliegan la aplicación.
+## Documentación
 
+- [Docker: arranque, persistencia y configuración para servidor](docs/docker.md).
+- [Autenticación, administrador inicial y límites](docs/authentication.md).
+- [Pruebas y alcance de la validación](docs/testing.md).
+- [Alcance esencial y criterio de primera pasada](docs/essential-scope.md).
 
-## Acceso y cuentas del personal
+## Límites de esta primera versión
 
-La API de negocio requiere una cuenta activa y autenticada. Solo los administradores pueden crear cuentas mediante `/api/v1/auth/register`. La primera cuenta administradora se prepara desde una terminal de confianza con `python -m app.scripts.create_admin`, después de aplicar las migraciones.
+Se prioriza un recorrido funcional presentable. No se incluyen permisos detallados por operación, recuperación de contraseñas, revocación persistente del logout, optimización de grandes volúmenes ni una pasarela financiera. El frontend conserva su diseño original con las correcciones necesarias para los recorridos descritos.
 
-Consulta la [guía de autenticación](docs/authentication.md) para instalar las dependencias, configurar la clave de firma, preparar el administrador, entender los códigos `401` y `403` y conocer las limitaciones pendientes. Tras actualizar esta mejora hay que iniciar sesión de nuevo.
+La app todavía no tiene una URL pública provisionada. Antes de alojarla hay que elegir un proveedor, configurar HTTPS y copias de seguridad y revisar los límites de autenticación descritos en la guía. La privacidad del repositorio se decidirá al terminar esta primera puesta a punto; Docker no impide clonar un repositorio público.
 
----
+Se retiró la funcionalidad antigua de asistencias de las pantallas y de la API. Sus datos históricos se conservan en las bases existentes y en el historial de migraciones; no son una función de esta versión.
 
-## 🗺️ Documentación de la API (Endpoints del MVP)
+## Futuras mejoras
 
-A continuación se detallan las rutas principales integradas en la rama `developer` correspondientes al módulo de socios y tarifas:
+Estas propuestas están únicamente documentadas y **no forman parte de la aplicación inicial**:
 
-### 👥 Módulo de Miembros (`/api/v1/members`)
-* **`POST /` - Registrar Miembro:** Crea un nuevo perfil de socio en el sistema.
-* **`GET /{member_id}` - Obtener Perfil:** Recupera los datos detallados de un socio específico mediante su ID único.
-
-### 💳 Módulo de Planes de Suscripción (`/api/v1/plans`)
-* **`POST /` - Crear Plan:** Da de alta una nueva modalidad de tarifa en el catálogo del gimnasio.
-* **`GET /` - Listar Planes:** Devuelve el catálogo completo de suscripciones activas disponibles.
-
-### 💰 Módulo de Pagos y Caja (`/api/v1/payments`)
-* **`POST /` - Registrar Transacción:** Vincula un cobro exitoso a un miembro del gimnasio para activar o renovar su suscripción.
-
-
-## Attendance, Reports and CSV Export Module
-
-This module manages member attendance records linked to reservations. It allows the system to register when a member checks in for a reservation, optionally register a check-out time, list attendance records, generate attendance reports, and export attendance data to CSV.
-
-### Main features
-
-- Register member attendance for an existing reservation.
-- Validate that the member exists and is active.
-- Validate that the reservation exists.
-- Validate that the reservation belongs to the selected member.
-- Allow attendance only for confirmed reservations.
-- Prevent duplicated attendance records for the same member and reservation.
-- Register check-out time for attendance records.
-- List attendances with pagination.
-- Export attendances to CSV with optional filters.
-- Generate attendance and income reports.
-
-### Attendance endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/v1/attendances/` | Registers a new attendance/check-in. |
-| `GET` | `/api/v1/attendances/` | Lists attendances with pagination. |
-| `GET` | `/api/v1/attendances/{attendance_id}` | Returns one attendance record by ID. |
-| `POST` | `/api/v1/attendances/{attendance_id}/check-out` | Registers the check-out time for an attendance. |
-| `GET` | `/api/v1/attendances/export-csv` | Exports attendances to CSV. |
-
-### Attendance request example
-
-```json
-{
-  "member_id": 1,
-  "reservation_id": 1
-}
-```
-
-### Attendance response example
-
-```json
-{
-  "id": 1,
-  "member_id": 1,
-  "reservation_id": 1,
-  "check_in": "2026-05-29T10:30:00Z",
-  "check_out": null
-}
-```
-
-### Attendance listing with pagination
-
-The attendance listing endpoint supports pagination using `offset` and `limit`.
-
-Example:
-
-```http
-GET /api/v1/attendances/?offset=0&limit=20
-```
-
-- `offset`: number of records to skip.
-- `limit`: maximum number of records to return. Default value: `20`.
-
-### CSV export
-
-The CSV export endpoint returns attendance records as a downloadable `.csv` file.
-
-```http
-GET /api/v1/attendances/export-csv
-```
-
-Optional filters:
-
-| Query param | Type | Description |
-|---|---|---|
-| `start_date` | `date` | Filters attendances from this date. |
-| `end_date` | `date` | Filters attendances until this date. |
-| `member_id` | `int` | Filters attendances by member. |
-| `reservation_id` | `int` | Filters attendances by reservation. |
-
-Example:
-
-```http
-GET /api/v1/attendances/export-csv?start_date=2026-05-01&end_date=2026-05-31&member_id=1
-```
-
-The CSV includes:
-
-```text
-id, member_id, reservation_id, check_in, check_out
-```
-
-### Report endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/v1/reports/attendance` | Returns an attendance summary for a date range. |
-| `GET` | `/api/v1/reports/attendance/by-member` | Groups attendances by member. |
-| `GET` | `/api/v1/reports/attendance/by-reservation` | Groups attendances by reservation. |
-| `GET` | `/api/v1/reports/attendance/by-shift` | Groups attendances by shift/class. |
-| `GET` | `/api/v1/reports/income` | Returns completed payment income for a date range. |
-
-### Report date filters
-
-All report endpoints accept optional date range filters:
-
-```http
-GET /api/v1/reports/attendance?start_date=2026-05-01&end_date=2026-05-31
-```
-
-If no dates are provided, the report uses the current date by default.
-
-### Attendance business rules
-
-The attendance registration service applies the following validations:
-
-- The member must exist.
-- The member must be active.
-- The reservation must exist.
-- The reservation must belong to the member.
-- The reservation must have status `confirmed`.
-- A member cannot have duplicated attendance for the same reservation.
-- Check-out can only be registered once.
-
-### Related files
-
-```text
-app/models/attendance.py
-app/schemas/attendance.py
-app/services/attendance_service.py
-app/services/attendance_export_service.py
-app/routers/attendance.py
-app/schemas/report.py
-app/services/report_service.py
-app/routers/report.py
-app/tests/test_attendance.py
-app/tests/test_report.py
-app/scripts/seed_attendance_data.py
-```
-
-### Testing
-
-Attendance tests cover:
-
-- Successful attendance registration.
-- Member not found.
-- Reservation not found.
-- Reservation not belonging to the member.
-- Cancelled reservation validation.
-- Duplicate attendance validation.
-- Attendance listing with pagination.
-- Attendance detail by ID.
-- Check-out registration.
-- Duplicate check-out validation.
-
-Run tests with:
-
-```bash
-pytest app/tests/test_attendance.py
-pytest app/tests/test_report.py
-```
-
-### Pending validation
-
-The module requires final validation with:
-
-- PostgreSQL running.
-- Database tables created through Alembic or SQLModel metadata.
-- Attendance and report routers registered in `main.py`.
-- Real `Member` and `Reservation` data available.
-- Functional testing from Swagger at `/api/docs`.
-
-
-## 📋 Gestión del Negocio: Módulo de Planes y Estados
-
-### 1. Modelado de Planes de Suscripción
-En base a la estructura del archivo `plan.py`, el catálogo de tarifas del gimnasio se organiza bajo los siguientes parámetros del negocio:
-* **Nombre del Plan (`name`):** Identificador único de la tarifa (ej. Plan Básico, Plan Premium).
-* **Precio (`price`):** Valor numérico decimal que representa el coste mensual de la suscripción.
-* **Duración (`duration_days`):** Período de validez del plan, configurado de manera predeterminada en 30 días.
-
-### 2. Control de Estados del Miembro (MemberStatus)
-Para garantizar la lógica de accesos en el backend, la enumeración de estados en `member.py` restringe los flujos a tres situaciones comerciales válidas:
-* **Active:** Socio al corriente de pago con acceso total a las instalaciones y reservas.
-* **Inactive:** Socio en situación de baja temporal o con la suscripción web caducada.
-* **Suspended:** Acceso bloqueado por impagos del plan o por incidencias en el control de aforo.
-
-
-## 📑 Documentación Técnica — Iron Pulse (Aporte de Claudio)
-
-### 1. Descripción General del Proyecto
-[cite_start]**Iron Pulse** es una aplicación web de gestión integral para gimnasios diseñada para proporcionar una interfaz operativa completa para el personal del centro[cite: 1, 2, 12]. [cite_start]Su propósito principal es centralizar procesos clave como el alta de socios, la asignación de planes, el control de cobros, horarios de clases y asistencia, eliminando la dependencia de hojas de cálculo o herramientas técnicas directas como Swagger[cite: 7, 10].
-
-* [cite_start]**Problema que resuelve:** Automatiza la gestión fragmentada de centros medianos, reduciendo errores humanos y tiempos administrativos mediante una base consolidada[cite: 9, 10].
-* [cite_start]**Alcance del Sprint:** El sistema cubre con datos reales (no mocks) e interfaces funcionales los módulos de Dashboard, Members, Plans, Memberships, Payments, Classes, Attendance y Reports[cite: 17, 143].
-
-### 2. Arquitectura Técnica y Stack Tecnológico
-[cite_start]El sistema sigue un flujo desacoplado y estructurado para garantizar el rendimiento y la seguridad del negocio[cite: 27, 144]:
-
-| Capa / Componente | Tecnología Utilizada | Función en el Sistema |
-| :--- | :--- | :--- |
-| **Frontend** | HTML5, CSS3, JavaScript vanilla | [cite_start]Interfaz de usuario limpia e interactiva[cite: 20]. |
-| **Estilos** | Bootstrap 5.3 + Bootstrap Icons | [cite_start]Sistema de diseño coherente con tema oscuro (Dark Theme)[cite: 20, 97]. |
-| **Backend** | FastAPI (Python 3.11) | [cite_start]API REST robusta bajo el prefijo `/api/v1/`[cite: 20, 24]. |
-| **ORM** | SQLModel + SQLAlchemy | [cite_start]Gestión de modelos de datos y mapeo relacional[cite: 20]. |
-| **Base de Datos** | PostgreSQL | [cite_start]Persistencia de datos en contenedor independiente[cite: 20, 25]. |
-| **Autenticación** | JWT (OAuth2PasswordBearer) | [cite_start]Control de acceso seguro por tokens de sesión[cite: 20]. |
-| **Contenedores** | Docker + Docker Compose | [cite_start]Orquestación aislada de los servicios[cite: 20]. |
-
-> [cite_start]📁 **Estructura del Proyecto:** La comunicación se centraliza en el cliente HTTP `api.js` (añadiendo tokens JWT en cada cabecera) [cite: 23, 61][cite_start], mientras que el archivo `ui.js` maneja los estados visuales comunes (spinners de carga, alertas de error y guards de autenticación)[cite: 84, 85].
-
-### 3. Reglas de Negocio Clave del Sistema
-[cite_start]Para asegurar la integridad de la base de datos, el backend y el frontend cooperan validando las siguientes restricciones operativas[cite: 69]:
-* [cite_start]**Membresías Únicas:** Un socio solo puede poseer una membresía activa o pendiente de manera simultánea[cite: 41, 70]. [cite_start]No se emiten membresías a socios inactivos[cite: 71].
-* [cite_start]**Protección de Datos:** Se impide la eliminación de un socio que cuente con una membresía activa[cite: 33, 72]. [cite_start]Asimismo, no se puede borrar una membresía si esta ya tiene pagos completados asociados[cite: 46, 73].
-* [cite_start]**Control Financiero:** Los registros de pagos solo admiten modificaciones o eliminaciones dentro de una ventana temporal de 30 minutos posteriores a su creación[cite: 50, 74].
-* [cite_start]**Activación Automática:** Si un pago con estado `completed` cubre la totalidad del precio asignado al plan, la membresía transiciona automáticamente de `pending` a `active`[cite: 75].
-
-### 4. Requisitos de Instalación y Despliegue
-[cite_start]Para desplegar el proyecto en un entorno de desarrollo local, se deben cumplimentar las siguientes fases secuenciales[cite: 107]:
-1. [cite_start]**Clonación y Entorno:** Clonar el repositorio y configurar un entorno virtual de Python (`python -m venv .venv`)[cite: 108].
-2. [cite_start]**Dependencias:** Instalar los paquetes técnicos requeridos (`pip install -r requirements.txt`)[cite: 108].
-3. [cite_start]**Infraestructura Docker:** Levantar el contenedor de la base de datos relacional mediante `docker compose up -d db`[cite: 108].
-4. [cite_start]**Servicios:** Iniciar el backend con Uvicorn (`uvicorn main:app --reload`) y lanzar el frontend mediante la extensión *Live Server* en el puerto 5500[cite: 108].
+- Cobranza a través de un proveedor o medio de pago integrado.
+- Emisión de facturas.
+- Registro de asistencia mediante QR del socio, reflejado en la vista del administrador.

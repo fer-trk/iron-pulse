@@ -5,12 +5,8 @@ async function apiRequest(endpoint, options = {}) {
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
-        ...(options.headers || {})
-      },
-      ...options
+      ...options,
+      headers: { "Content-Type": "application/json", ...(token ? { "Authorization": `Bearer ${token}` } : {}), ...(options.headers || {}) }
     });
 
     if (!response.ok) {
@@ -27,6 +23,10 @@ async function apiRequest(endpoint, options = {}) {
         message = `Error ${response.status}: ${response.statusText}`;
       }
 
+      if (response.status === 401 && !endpoint.startsWith("/auth/")) {
+        localStorage.removeItem("access_token");
+        window.location.href = "login.html";
+      }
       throw new Error(message);
     }
 
