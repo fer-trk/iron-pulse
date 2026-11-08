@@ -1,11 +1,11 @@
 from contextlib import asynccontextmanager
 import logging
 
-from fastapi import FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers.attendance import router as attendance_router
+from app.core.security import get_current_user_sub
 from app.routers.member import router as member_router
 from app.routers.membership import router as membership_router
 from app.routers.payment import router as payment_router
@@ -48,16 +48,20 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/api/v1")
-app.include_router(plan_router, prefix="/api/v1")
-app.include_router(member_router, prefix="/api/v1")
-app.include_router(membership_router, prefix="/api/v1")
-app.include_router(payment_router, prefix="/api/v1")
-app.include_router(attendance_router, prefix="/api/v1")
-app.include_router(shifts_router, prefix="/api/v1")
-app.include_router(reservations_router, prefix="/api/v1")
-app.include_router(report_router, prefix="/api/v1")
+# Business routes require an active database user, including reports, exports
+# and check-out. Keep login public and account creation separately admin-only.
+business_router = APIRouter(
+    prefix="/api/v1", dependencies=[Depends(get_current_user_sub)],
+)
+for router in (
+    plan_router, member_router, membership_router, payment_router,
+    shifts_router, reservations_router, report_router,
+):
+    business_router.include_router(router)
+app.include_router(business_router)
 
 
 @app.get("/", tags=["health"])
+@app.get("/api/health", tags=["health"])
 def health():
     return {"status": "ok", "app": settings.APP_NAME, "version": "1.0.0"}

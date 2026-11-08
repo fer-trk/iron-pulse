@@ -1,64 +1,56 @@
-version: "3.9"
+# Standalone deployment file; do not overlay it on docker-compose.yml.
+# A TLS reverse proxy can forward to the loopback port published below.
+name: iron-pulse-demo
+
 services:
   db:
     image: postgres:15-alpine
-    container_name: gym_db_prod
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-gym_db}
+      POSTGRES_USER: ${DB_USER:-gymuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set a private DB_PASSWORD}
       TZ: Europe/Madrid
     volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
-    expose:
-      - "5432"
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  nginx:
-    image: nginx:alpine
-    container_name: gym_nginx_prod
-    restart: always
-    ports:
-      - "80:80"
-    depends_on:
-      - api
-    volumes:
-      - /var/lib/docker/volumes/portainer_data/_data/compose/23/Frontend:/usr/share/nginx/html
-      - /var/lib/docker/volumes/portainer_data/_data/compose/23/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      retries: 10
 
   api:
-    build: .
-    container_name: gym_api_prod
-    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
     environment:
-      APP_NAME: ${APP_NAME:-GymAPI}
+      APP_NAME: ${APP_NAME:-Iron Pulse}
       DEBUG: "False"
-      SECRET_KEY: ${SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY:?Set a private SECRET_KEY of at least 32 characters}
       ALGORITHM: ${ALGORITHM:-HS256}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
-      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST: db
-      DB_PORT: ${DB_PORT:-5432}
-      CORS_ORIGINS: ${CORS_ORIGINS:-*}
-    expose:
-      - "8000"
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-gym_db}
+      DB_USER: ${DB_USER:-gymuser}
+      DB_PASSWORD: ${DB_PASSWORD:?Set a private DB_PASSWORD}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      TZ: Europe/Madrid
     depends_on:
       db:
         condition: service_healthy
-    command: gunicorn main:app -k uvicorn.workers.UvicornWorker --workers 3 --bind 0.0.0.0:8000 --timeout 120 --access-logfile - --error-logfile -
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
-  postgres_data_prod:
-
-networks:
-  default:
-    name: gym_network_prod
+  postgres_data:

@@ -1,7 +1,8 @@
+let renderedRecords = new Map();
 document.addEventListener("DOMContentLoaded", loadPayments);
 
-const PLAN_PRICES = { 1: 30, 2: 150, 3: 270 };
-const PLAN_NAMES  = { 1: "Mensual", 2: "Semestral", 3: "Anual" };
+let PLAN_PRICES = {};
+let PLAN_NAMES = {};
 
 // Cache de members para mostrar nombres
 let membersMap = {};
@@ -10,12 +11,12 @@ async function loadPayments() {
     showLoading("payments-table-container");
     try {
         const [payments, members] = await Promise.all([
-            getData("/payments/"),
-            getData("/members/")
+            getAllData("/payments/"),
+            getAllData("/members/")
         ]);
 
         // Construye mapa membership_id → member_name via memberships
-        const memberships = await getData("/memberships/");
+        const memberships = await getAllData("/memberships/");
         const membershipMemberMap = {};
         (memberships || []).forEach(ms => {
             const member = (members || []).find(m => m.id === ms.member_id);
@@ -36,6 +37,7 @@ async function loadPayments() {
 }
 
 function renderPaymentsTable(payments, membershipMemberMap = {}) {
+    renderedRecords = new Map((payments || []).map(r => [r.id, r]));
     const container = document.getElementById("payments-table-container");
 
     if (!payments || payments.length === 0) {
@@ -67,20 +69,20 @@ function renderPaymentsTable(payments, membershipMemberMap = {}) {
                     ${payments.map(p => `
                         <tr>
                             <td>${p.id}</td>
-                            <td class="fw-semibold">${membershipMemberMap[p.membership_id] || "-"}</td>
+                            <td class="fw-semibold">${escapeHtml(membershipMemberMap[p.membership_id] || "-")}</td>
                             <td>${p.membership_id}</td>
                             <td>${formatCurrency(p.amount)}</td>
                             <td>${formatDate(p.payment_date)}</td>
                             <td class="text-capitalize">${p.payment_method || "-"}</td>
-                            <td>${p.reference || "-"}</td>
+                            <td>${escapeHtml(p.reference || "-")}</td>
                             <td>${renderPaymentBadge(p.status)}</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary me-1"
-                                    onclick="openEditModal(${p.id}, '${p.status}', '${p.reference || ''}', '${p.notes || ''}')">
+                                    onclick="editRenderedRecord(${p.id})">
                                     <i class="bi bi-pencil"></i> Edit
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger"
-                                    onclick="confirmDeletePayment(${p.id})">
+                                    onclick="deleteRenderedRecord(${p.id})">
                                     <i class="bi bi-trash"></i> Delete
                                 </button>
                             </td>
@@ -108,9 +110,12 @@ async function openAddModal() {
     membershipSelect.innerHTML = `<option value="">Loading memberships...</option>`;
 
     try {
+        const plans = await getData("/plans/");
+        PLAN_PRICES = Object.fromEntries(plans.map(p => [p.id, p.price]));
+        PLAN_NAMES = Object.fromEntries(plans.map(p => [p.id, p.name]));
         const [memberships, members] = await Promise.all([
-            getData("/memberships/"),
-            getData("/members/")
+            getAllData("/memberships/"),
+            getAllData("/members/")
         ]);
 
         // Mapa member_id → nombre
@@ -128,7 +133,7 @@ async function openAddModal() {
                     const planName   = PLAN_NAMES[ms.plan_id] || `Plan ${ms.plan_id}`;
                     const price      = PLAN_PRICES[ms.plan_id] || "";
                     return `<option value="${ms.id}" data-price="${price}">
-                        #${ms.id} — ${memberName} · ${planName}${price ? ` (€${price})` : ""}
+                        #${ms.id} — ${escapeHtml(memberName)} · ${escapeHtml(planName)}${price ? ` (€${price})` : ""}
                     </option>`;
                 }).join("");
         }
@@ -147,7 +152,7 @@ function onMembershipSelected() {
 
     if (price && select.value !== "") {
         amountField.value    = parseFloat(price).toFixed(2);
-        amountField.readOnly = true;
+        amountField.readOnly = false;
         amountField.classList.add("bg-light");
     } else {
         amountField.value    = "";
@@ -247,3 +252,6 @@ async function submitDeletePayment() {
         errorDiv.classList.remove("d-none");
     }
 }
+
+function editRenderedRecord(id) { const r = renderedRecords.get(id); if (r) openEditModal(...[r.id, r.status, r.reference || "", r.notes || ""]); }
+function deleteRenderedRecord(id) { const r = renderedRecords.get(id); if (r) confirmDeletePayment(r.id); }

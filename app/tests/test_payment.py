@@ -1,10 +1,15 @@
+import pytest
+
 from datetime import date
-from decimal import Decimal
+from app.models.membership import Membership, MembershipStatus
 
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app.models.payment import PaymentMethod, PaymentStatus
+
+
+pytestmark = pytest.mark.usefixtures("auth_headers")
 
 
 def test_create_payment(
@@ -17,12 +22,10 @@ def test_create_payment(
     response = client.post(
         "/api/v1/payments/",
         json={
-            "member_id": active_member.id,
             "membership_id": active_membership.id,
             "amount": str(monthly_plan.price),
-            "method": PaymentMethod.card,
+            "payment_method": PaymentMethod.card,
             "status": PaymentStatus.completed,
-            "payment_date": str(date.today()),
         },
     )
 
@@ -31,31 +34,33 @@ def test_create_payment(
     data = response.json()
 
     assert data["id"] is not None
-    assert data["member_id"] == active_member.id
     assert data["membership_id"] == active_membership.id
-    assert data["method"] == PaymentMethod.card
+    assert data["payment_method"] == PaymentMethod.card
     assert data["status"] == PaymentStatus.completed
 
 
-def test_create_payment_member_not_found(
+def test_create_payment_cancelled_membership(
     client: TestClient,
+    session: Session,
     active_membership,
     monthly_plan,
 ):
+    active_membership.status = MembershipStatus.cancelled
+    session.add(active_membership)
+    session.commit()
+
     response = client.post(
         "/api/v1/payments/",
         json={
-            "member_id": 999,
             "membership_id": active_membership.id,
             "amount": str(monthly_plan.price),
-            "method": PaymentMethod.cash,
+            "payment_method": PaymentMethod.cash,
             "status": PaymentStatus.completed,
-            "payment_date": str(date.today()),
         },
     )
 
-    assert response.status_code == 404
-    assert response.json()["detail"] == "Member not found"
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Cannot register payments on cancelled memberships"
 
 
 def test_create_payment_membership_not_found(
@@ -66,12 +71,10 @@ def test_create_payment_membership_not_found(
     response = client.post(
         "/api/v1/payments/",
         json={
-            "member_id": active_member.id,
             "membership_id": 999,
             "amount": str(monthly_plan.price),
-            "method": PaymentMethod.card,
+            "payment_method": PaymentMethod.card,
             "status": PaymentStatus.completed,
-            "payment_date": str(date.today()),
         },
     )
 
@@ -89,12 +92,10 @@ def test_get_payment(
     create_response = client.post(
         "/api/v1/payments/",
         json={
-            "member_id": active_member.id,
             "membership_id": active_membership.id,
             "amount": str(monthly_plan.price),
-            "method": PaymentMethod.transfer,
+            "payment_method": PaymentMethod.transfer,
             "status": PaymentStatus.completed,
-            "payment_date": str(date.today()),
         },
     )
 
@@ -107,7 +108,7 @@ def test_get_payment(
     data = response.json()
 
     assert data["id"] == payment_id
-    assert data["member_id"] == active_member.id
+    assert data["membership_id"] == active_membership.id
 
 
 def test_get_payment_not_found(client: TestClient):
@@ -124,20 +125,21 @@ def test_list_payments_with_pagination(
     active_membership,
     monthly_plan,
 ):
+    created_ids = []
     for _ in range(3):
-        client.post(
+        created = client.post(
             "/api/v1/payments/",
             json={
-                "member_id": active_member.id,
                 "membership_id": active_membership.id,
                 "amount": str(monthly_plan.price),
-                "method": PaymentMethod.cash,
+                "payment_method": PaymentMethod.cash,
                 "status": PaymentStatus.completed,
-                "payment_date": str(date.today()),
             },
         )
+        assert created.status_code == 201
+        created_ids.append(created.json()["id"])
 
-    response = client.get("/api/v1/payments/?offset=0&limit=2")
+    response = client.get("/api/v1/payments/?skip=1&limit=2")
 
     assert response.status_code == 200
 
@@ -145,10 +147,12 @@ def test_list_payments_with_pagination(
 
     assert isinstance(data, list)
     assert len(data) == 2
+    assert [p["id"] for p in data] == created_ids[-2::-1]
 
 
-def test_list_payments_by_member(
+def test_list_payments_by_membership(
     client: TestClient,
+    session: Session,
     active_member,
     active_membership,
     monthly_plan,
@@ -156,24 +160,35 @@ def test_list_payments_by_member(
     client.post(
         "/api/v1/payments/",
         json={
-            "member_id": active_member.id,
             "membership_id": active_membership.id,
             "amount": str(monthly_plan.price),
-            "method": PaymentMethod.card,
+            "payment_method": PaymentMethod.card,
             "status": PaymentStatus.completed,
-            "payment_date": str(date.today()),
         },
     )
 
-    response = client.get(f"/api/v1/payments/?member_id={active_member.id}")
+    other_membership = Membership(
+        member_id=active_member.id, plan_id=monthly_plan.id,
+        start_date=date.today(), status=MembershipStatus.active,
+    )
+    session.add(other_membership)
+    session.commit()
+    session.refresh(other_membership)
+    other_payment = client.post("/api/v1/payments/", json={
+        "membership_id": other_membership.id,
+        "amount": "10.00", "payment_method": "cash",
+    })
+    assert other_payment.status_code == 201
+
+    response = client.get(f"/api/v1/payments/?membership_id={active_membership.id}")
 
     assert response.status_code == 200
 
     data = response.json()
 
     assert isinstance(data, list)
-    assert len(data) >= 1
-    assert all(p["member_id"] == active_member.id for p in data)
+    assert len(data) == 1
+    assert all(p["membership_id"] == active_membership.id for p in data)
 
 
 def test_payment_pending_then_completed(
@@ -185,12 +200,10 @@ def test_payment_pending_then_completed(
     create_response = client.post(
         "/api/v1/payments/",
         json={
-            "member_id": active_member.id,
             "membership_id": active_membership.id,
             "amount": str(monthly_plan.price),
-            "method": PaymentMethod.card,
+            "payment_method": PaymentMethod.card,
             "status": PaymentStatus.pending,
-            "payment_date": str(date.today()),
         },
     )
 
@@ -201,4 +214,8 @@ def test_payment_pending_then_completed(
 
     update_response = client.patch(
         f"/api/v1/payments/{payment_id}",
-        json={"status": Pay
+        json={"status": PaymentStatus.completed},
+    )
+
+    assert update_response.status_code == 200
+    assert update_response.json()["status"] == PaymentStatus.completed

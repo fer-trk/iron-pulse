@@ -1,7 +1,11 @@
+import pytest
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.models.member import MemberStatus
+
+
+pytestmark = pytest.mark.usefixtures("auth_headers")
 
 
 def test_create_member(client: TestClient):
@@ -23,7 +27,7 @@ def test_create_member(client: TestClient):
     assert data["first_name"] == "Ana"
     assert data["last_name"] == "López"
     assert data["email"] == "ana.lopez@gym.es"
-    assert data["status"] == MemberStatus.active
+    assert data["is_active"] is True
 
 
 def test_create_member_duplicate_email(client: TestClient):
@@ -85,7 +89,7 @@ def test_list_members_with_pagination(client: TestClient):
             },
         )
 
-    response = client.get("/api/v1/members/?offset=0&limit=2")
+    response = client.get("/api/v1/members/?skip=1&limit=2")
 
     assert response.status_code == 200
 
@@ -93,6 +97,7 @@ def test_list_members_with_pagination(client: TestClient):
 
     assert isinstance(data, list)
     assert len(data) == 2
+    assert [m["first_name"] for m in data] == ["Member1", "Member2"]
 
 
 def test_update_member(client: TestClient):
@@ -131,7 +136,7 @@ def test_update_member_not_found(client: TestClient):
     assert response.json()["detail"] == "Member not found"
 
 
-def test_suspend_member(client: TestClient):
+def test_deactivate_member(client: TestClient):
     create_response = client.post(
         "/api/v1/members/",
         json={
@@ -144,14 +149,14 @@ def test_suspend_member(client: TestClient):
 
     member_id = create_response.json()["id"]
 
-    response = client.patch(f"/api/v1/members/{member_id}/suspend")
+    response = client.patch(f"/api/v1/members/{member_id}", json={"is_active": False})
 
     assert response.status_code == 200
-    assert response.json()["status"] == MemberStatus.suspended
+    assert response.json()["is_active"] is False
 
 
-def test_suspend_member_not_found(client: TestClient):
-    response = client.patch("/api/v1/members/999/suspend")
+def test_deactivate_member_not_found(client: TestClient):
+    response = client.patch("/api/v1/members/999", json={"is_active": False})
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Member not found"
@@ -165,16 +170,16 @@ def test_reactivate_member(client: TestClient, session: Session):
         last_name="Test",
         email="inactivo.test@gym.es",
         phone="+34600131313",
-        status=MemberStatus.suspended,
+        is_active=False,
     )
     session.add(member)
     session.commit()
     session.refresh(member)
 
-    response = client.patch(f"/api/v1/members/{member.id}/reactivate")
+    response = client.patch(f"/api/v1/members/{member.id}", json={"is_active": True})
 
     assert response.status_code == 200
-    assert response.json()["status"] == MemberStatus.active
+    assert response.json()["is_active"] is True
 
 
 def test_delete_member(client: TestClient):
@@ -192,7 +197,7 @@ def test_delete_member(client: TestClient):
 
     response = client.delete(f"/api/v1/members/{member_id}")
 
-    assert response.status_code == 200
+    assert response.status_code == 204
 
     get_response = client.get(f"/api/v1/members/{member_id}")
 

@@ -49,10 +49,26 @@ def update(
     session: Session = Depends(get_session),
     _=auth
 ):
-    from datetime import datetime
+    from datetime import date, datetime
+    from decimal import Decimal
+    from app.models.plan import Plan
     membership = MembershipService.get_by_id(session, membership_id)
-    for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(membership, field, value)
+    if data.status is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail="A non-null status is required")
+    if data.status != membership.status:
+        from fastapi import HTTPException
+        if membership.status == MembershipStatus.cancelled:
+            raise HTTPException(status_code=400, detail="Cancelled memberships cannot be reopened")
+        plan = session.get(Plan, membership.plan_id)
+        paid = MembershipService.get_total_paid(session, membership_id)
+        if data.status == MembershipStatus.active and paid < Decimal(str(plan.price)):
+            raise HTTPException(status_code=400, detail="A membership cannot be activated before full payment")
+        if data.status == MembershipStatus.pending and paid >= Decimal(str(plan.price)):
+            raise HTTPException(status_code=400, detail="A fully paid membership cannot be marked pending")
+        if data.status == MembershipStatus.expired and membership.end_date and membership.end_date >= date.today():
+            raise HTTPException(status_code=400, detail="The membership has not expired")
+    membership.status = data.status
     membership.updated_at = datetime.utcnow()
     session.add(membership)
     session.commit()

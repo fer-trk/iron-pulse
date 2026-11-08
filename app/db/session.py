@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel import Session, create_engine
 from app.core.config import settings
 
 _engine = None
@@ -10,16 +10,12 @@ def get_engine():
         _engine = create_engine(
             settings.get_database_url(),
             echo=settings.DEBUG,
+            hide_parameters=True,
             pool_pre_ping=True,
             pool_size=10,
             max_overflow=20,
         )
     return _engine
-
-
-def create_db_and_tables():
-    """Solo para tests — en producción usar Alembic."""
-    SQLModel.metadata.create_all(get_engine())
 
 
 def get_session():

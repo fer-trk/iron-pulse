@@ -3,7 +3,7 @@ from typing import Optional
 from sqlmodel import Session, select
 from fastapi import HTTPException
 
-from ..models.member import Member
+from ..models.member import Member, MemberStatus
 from ..schemas.member import MemberCreate, MemberUpdate
 
 logger = logging.getLogger("gymapi")
@@ -38,6 +38,7 @@ class MemberService:
         if existing:
             raise HTTPException(status_code=409, detail="Email already registered")
         member = Member.model_validate(data)
+        member.status = MemberStatus.active if member.is_active else MemberStatus.inactive
         session.add(member)
         session.commit()
         session.refresh(member)
@@ -47,8 +48,13 @@ class MemberService:
     @staticmethod
     def update(session: Session, member_id: int, data: MemberUpdate) -> Member:
         member = MemberService.get_by_id(session, member_id)
+        if data.email is not None:
+            existing = session.exec(select(Member).where(Member.email == data.email, Member.id != member_id)).first()
+            if existing:
+                raise HTTPException(409, "Email already registered")
         for key, value in data.model_dump(exclude_unset=True).items():
             setattr(member, key, value)
+        member.status = MemberStatus.active if member.is_active else MemberStatus.inactive
         session.add(member)
         session.commit()
         session.refresh(member)
@@ -61,15 +67,17 @@ class MemberService:
         member = MemberService.get_by_id(session, member_id)
         active = session.exec(
             select(Membership).where(
-                Membership.member_id == member_id,
-                Membership.status == MembershipStatus.active
+                Membership.member_id == member_id
             )
         ).first()
         if active:
             raise HTTPException(
                 status_code=400,
-                detail="Cannot delete a member with an active membership. Cancel the membership first."
+                detail="Cannot delete a member with membership history. Deactivate the member instead."
             )
+        from ..models.reservation import Reservation
+        if session.exec(select(Reservation).where(Reservation.member_id == member_id)).first():
+            raise HTTPException(400, "Cannot delete a member with class enrollment history. Deactivate instead.")
         session.delete(member)
         session.commit()
         logger.info(f"Member deleted: id={member_id}")

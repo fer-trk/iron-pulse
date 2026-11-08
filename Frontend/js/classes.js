@@ -1,3 +1,4 @@
+let renderedRecords = new Map();
 document.addEventListener("DOMContentLoaded", loadClasses);
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
@@ -14,6 +15,7 @@ async function loadClasses() {
 }
 
 function renderClassesTable(classes) {
+    renderedRecords = new Map((classes || []).map(r => [r.id, r]));
     const container = document.getElementById("classes-table-container");
 
     if (!classes || classes.length === 0) {
@@ -44,8 +46,8 @@ function renderClassesTable(classes) {
                     ${classes.map(item => `
                         <tr>
                             <td>${item.id}</td>
-                            <td class="fw-semibold">${item.class_name}</td>
-                            <td>${item.instructor || "-"}</td>
+                            <td class="fw-semibold">${escapeHtml(item.class_name)}</td>
+                            <td>${escapeHtml(item.instructor || "-")}</td>
                             <td class="text-capitalize">${item.day_of_week}</td>
                             <td>${item.start_time} - ${item.end_time}</td>
                             <td>${item.max_capacity}</td>
@@ -55,11 +57,11 @@ function renderClassesTable(classes) {
                             }</td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary me-1"
-                                    onclick="openEditModal(${item.id}, '${item.class_name.replace(/'/g,"\\'")}', '${item.instructor.replace(/'/g,"\\'")}', '${item.day_of_week}', '${item.start_time}', '${item.end_time}', ${item.max_capacity}, ${item.active_slot})">
+                                    onclick="editRenderedRecord(${item.id})">
                                     <i class="bi bi-pencil"></i> Edit
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger"
-                                    onclick="confirmDeleteClass(${item.id}, '${item.class_name.replace(/'/g,"\\'")}')">
+                                    onclick="deleteRenderedRecord(${item.id})">
                                     <i class="bi bi-trash"></i> Delete
                                 </button>
                             </td>
@@ -186,3 +188,6 @@ async function submitDeleteClass() {
         errorDiv.classList.remove("d-none");
     }
 }
+
+function editRenderedRecord(id) { const r = renderedRecords.get(id); if (r) openEditModal(...[r.id, r.class_name, r.instructor, r.day_of_week, r.start_time, r.end_time, r.max_capacity, r.active_slot]); }
+function deleteRenderedRecord(id) { const r = renderedRecords.get(id); if (r) confirmDeleteClass(r.id, r.class_name); }

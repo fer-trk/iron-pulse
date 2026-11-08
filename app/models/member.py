@@ -5,7 +5,6 @@ from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from app.models.reservation import Reservation
-    from app.models.attendance import Attendance
     from app.models.membership import Membership
 
 
@@ -27,5 +26,4 @@ class Member(SQLModel, table=True):
     status: MemberStatus = Field(default=MemberStatus.active)
 
     reservations: List["Reservation"] = Relationship(back_populates="member")
-    attendances: List["Attendance"] = Relationship(back_populates="member")
     memberships: List["Membership"] = Relationship(back_populates="member")

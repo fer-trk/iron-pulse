@@ -1,0 +1,62 @@
+name: Database migrations
+
+on:
+  pull_request:
+  push:
+    branches: [developer, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrations-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrations:
+    name: PostgreSQL 15 / ${{ matrix.configuration }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [db-fields, database-url]
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: iron_pulse_ci
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d iron_pulse_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DEBUG: "False"
+      SECRET_KEY: ci-only-migration-key-never-use-in-production-2026
+      DATABASE_URL: ""
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: iron_pulse_ci
+      DB_USER: ci
+      DB_PASSWORD: ci_password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install application dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Use explicit URL with deliberately invalid fallback fields
+        if: matrix.configuration == 'database-url'
+        run: |
+          echo 'DATABASE_URL=postgresql://ci:ci_password@localhost:5432/iron_pulse_ci' >> "$GITHUB_ENV"
+          echo 'DB_HOST=unreachable.invalid' >> "$GITHUB_ENV"
+      - name: Test offline SQL and migrations on a fresh database
+        run: python -m unittest discover -s tests/migrations -v

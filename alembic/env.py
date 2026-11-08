@@ -1,63 +1,50 @@
 from logging.config import fileConfig
-from sqlalchemy import create_engine
+
 from alembic import context
+from sqlalchemy import create_engine, pool
 from sqlmodel import SQLModel
-import os
 
 from app.core.config import settings
-from app.models.plan import Plan
-from app.models.member import Member
-from app.models.membership import Membership
-from app.models.payment import Payment
-from app.models.shift import AvailableShift
-from app.models.reservation import Reservation
-from app.models.attendance import Attendance
-from app.models.user import User
+# Register every table for Alembic autogeneration.
+from app.models.plan import Plan  # noqa: F401
+from app.models.member import Member  # noqa: F401
+from app.models.membership import Membership  # noqa: F401
+from app.models.payment import Payment  # noqa: F401
+from app.models.shift import AvailableShift  # noqa: F401
+from app.models.reservation import Reservation  # noqa: F401
+from app.models.user import User  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = SQLModel.metadata
-
-DB_USER = os.getenv("DB_USER", "gymuser")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "gympassword")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "gym_db")
-
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# Share the application's URL precedence and .env support. Pass the URL directly
+# instead of through ConfigParser, which interprets percent-encoded credentials.
+database_url = settings.get_database_url()
 
 
 def run_migrations_offline():
     context.configure(
-        url=DATABASE_URL,
+        url=database_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
-
-def run_migrations_offline():
-    url = config.get_main_option("sqlalchemy.url")
-    context.configure(url=url, target_metadata=target_metadata,
-                      literal_binds=True, dialect_opts={"paramstyle": "named"})
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online():
-    connectable = create_engine(DATABASE_URL)
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-    with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
-        with context.begin_transaction():
-            context.run_migrations()
+    connectable = create_engine(database_url, poolclass=pool.NullPool)
+    try:
+        with connectable.connect() as connection:
+            context.configure(connection=connection, target_metadata=target_metadata)
+            with context.begin_transaction():
+                context.run_migrations()
+    finally:
+        connectable.dispose()
 
 
 if context.is_offline_mode():
