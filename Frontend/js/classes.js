@@ -47,7 +47,7 @@ function renderClassesTable(classes) {
                         <tr>
                             <td>${item.id}</td>
                             <td class="fw-semibold">${escapeHtml(item.class_name)}</td>
-                            <td>${item.instructor || "-"}</td>
+                            <td>${escapeHtml(item.instructor || "-")}</td>
                             <td class="text-capitalize">${item.day_of_week}</td>
                             <td>${item.start_time} - ${item.end_time}</td>
                             <td>${item.max_capacity}</td>

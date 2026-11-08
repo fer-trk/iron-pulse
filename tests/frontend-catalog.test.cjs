@@ -17,7 +17,7 @@ function environment(file) {
       return elements.get(id);
     },
   };
-  const context = vm.createContext({ document, console, Date, escapeHtml: value => String(value),
+  const context = vm.createContext({ document, console, Date, showLoading(){}, showError(id, text){throw new Error(text);}, formatDate:value=>String(value), escapeHtml: value => String(value),
     Option: function(text, value) { this.text = text; this.value = value; this.dataset = {}; },
     bootstrap: { Modal: class { show() {} } },
     getData: async path => {
@@ -85,4 +85,13 @@ test("login uses a real form and one shared submit handler", () => {
   assert.match(html, /<form id="login-form">/);
   assert.match(html, /type="submit"/);
   assert.doesNotMatch(html, /handleLoginClick|onclick="handleLogin/);
+});
+
+
+test("membership table also shows actual plan names", async () => {
+  const { context, document } = environment("Frontend/js/memberships.js");
+  await vm.runInContext("loadMemberships()", context);
+  const html = document.getElementById("memberships-table-container").innerHTML;
+  assert.match(html, /Actual custom plan/);
+  assert.doesNotMatch(html, /Mensual|Semestral|Anual/);
 });

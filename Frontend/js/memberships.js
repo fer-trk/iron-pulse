@@ -2,15 +2,16 @@ document.addEventListener("DOMContentLoaded", loadMemberships);
 
 // Cache de members para mostrar nombres en la tabla
 let membersMap = {};
+let plansMap = {};
 let existingMemberships = [];
 
 async function loadMemberships() {
   showLoading("memberships-table-container");
   try {
     // Carga memberships y members en paralelo
-    const [memberships, members] = await Promise.all([
+    const [memberships, members, plans] = await Promise.all([
       getAllData("/memberships/"),
-      getAllData("/members/")
+      getAllData("/members/"), getData("/plans/")
     ]);
 
     // Construye un mapa id → nombre
@@ -19,6 +20,7 @@ async function loadMemberships() {
       membersMap[m.id] = `${m.first_name} ${m.last_name}`;
     });
 
+    plansMap = Object.fromEntries(plans.map(p => [p.id, p.name]));
     existingMemberships = memberships || [];
     renderMembershipsTable(existingMemberships);
   } catch (error) {
@@ -61,8 +63,8 @@ function renderMembershipsTable(memberships) {
           ${memberships.map(m => `
             <tr>
               <td>${m.id}</td>
-              <td class="fw-semibold">${getMemberName(m.member_id)}</td>
-              <td>${getPlanName(m.plan_id)}</td>
+              <td class="fw-semibold">${escapeHtml(getMemberName(m.member_id))}</td>
+              <td>${escapeHtml(getPlanName(m.plan_id))}</td>
               <td>${formatDate(m.start_date)}</td>
               <td>${formatDate(m.end_date)}</td>
               <td>${renderMembershipBadge(m.status)}</td>
@@ -81,8 +83,7 @@ function renderMembershipsTable(memberships) {
 }
 
 function getPlanName(planId) {
-  const names = { 1: "Mensual", 2: "Semestral", 3: "Anual" };
-  return names[planId] || `Plan ${planId}`;
+  return plansMap[planId] || `Plan ${planId}`;
 }
 
 function renderMembershipBadge(status) {

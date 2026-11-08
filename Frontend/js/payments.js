@@ -69,7 +69,7 @@ function renderPaymentsTable(payments, membershipMemberMap = {}) {
                     ${payments.map(p => `
                         <tr>
                             <td>${p.id}</td>
-                            <td class="fw-semibold">${membershipMemberMap[p.membership_id] || "-"}</td>
+                            <td class="fw-semibold">${escapeHtml(membershipMemberMap[p.membership_id] || "-")}</td>
                             <td>${p.membership_id}</td>
                             <td>${formatCurrency(p.amount)}</td>
                             <td>${formatDate(p.payment_date)}</td>
