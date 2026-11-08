@@ -49,14 +49,6 @@ def create_access_token(subject: int, expires_delta: Optional[timedelta] = None)
     )
 
 
-def create_refresh_token(subject: int) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    return jwt.encode(
-        {"sub": str(subject), "exp": expire, "type": "refresh", "jti": str(uuid4())},
-        settings.SECRET_KEY, algorithm=settings.ALGORITHM,
-    )
-
-
 def invalid_credentials() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

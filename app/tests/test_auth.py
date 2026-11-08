@@ -7,7 +7,7 @@ import pytest
 from sqlmodel import select
 
 from app.core.config import settings
-from app.core.security import create_access_token, create_refresh_token, hash_password, verify_password
+from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
 
 
@@ -190,8 +190,14 @@ def test_tokens_have_distinct_session_identifiers():
 
 def test_refresh_token_cannot_access_business_routes(client, make_user):
     user = make_user()
+    # Construct an unsupported token in the test; the application only issues access tokens.
+    token = jwt.encode(
+        {"sub": str(user.id), "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+         "type": "refresh"},
+        settings.SECRET_KEY, algorithm=settings.ALGORITHM,
+    )
     response = client.get("/api/v1/members/", headers={
-        "Authorization": f"Bearer {create_refresh_token(user.id)}",
+        "Authorization": f"Bearer {token}",
     })
     assert response.status_code == 401
 
