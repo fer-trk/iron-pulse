@@ -1,4 +1,6 @@
 from datetime import datetime
+from decimal import Decimal
+from sqlalchemy import Column, Numeric
 from typing import Optional, List, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 
@@ -11,7 +13,7 @@ class Plan(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(unique=True, index=True, max_length=100)
-    price: float = Field(default=0.0, ge=0)
+    price: Decimal = Field(default=Decimal("0.00"), sa_column=Column(Numeric(8, 2), nullable=False))
     description: Optional[str] = Field(default=None, max_length=500)
     duration_days: int = Field(default=30, gt=0)
     active: bool = Field(default=True)

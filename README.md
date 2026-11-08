@@ -1,4 +1,6 @@
-# Project-CRUD-Python-G2
+# Iron Pulse
+
+Versión inicial: socios, planes, registro manual de cobros e inscripción a clases. Consulta el [alcance esencial](docs/essential-scope.md). Asistencia por QR, facturación y pagos mediante proveedor quedan para futuras mejoras.
 ## Ejecutar con Docker
 
 Con Docker Desktop o Docker Engine y Compose v2 activos:

@@ -38,15 +38,19 @@ class MembershipService:
         member = session.get(Member, data.member_id)
         if not member:
             raise HTTPException(status_code=404, detail="Member not found")
-        if member.status != MemberStatus.active:
+        if not member.is_active or member.status != MemberStatus.active:
             raise HTTPException(status_code=400, detail="Cannot create a membership for an inactive member")
         plan = session.get(Plan, data.plan_id)
         if not plan:
             raise HTTPException(status_code=404, detail="Plan not found")
         if not plan.active:
             raise HTTPException(status_code=400, detail="The selected plan is not active")
+        if data.status != MembershipStatus.pending:
+            raise HTTPException(status_code=400, detail="New memberships must start pending; completed payments activate them")
         membership = Membership.model_validate(data)
         membership.calculate_end_date(plan.duration_days)
+        if plan.price == 0:
+            membership.status = MembershipStatus.active
         session.add(membership)
         session.commit()
         session.refresh(membership)
@@ -59,14 +63,13 @@ class MembershipService:
         # Block deletion if there are completed payments linked to this membership
         payments = session.exec(
             select(Payment).where(
-                Payment.membership_id == membership_id,
-                Payment.status == PaymentStatus.completed
+                Payment.membership_id == membership_id
             )
         ).first()
         if payments:
             raise HTTPException(
                 status_code=400,
-                detail="Cannot delete a membership with completed payments."
+                detail="Cannot delete a membership with payments."
             )
         session.delete(membership)
         session.commit()
@@ -83,7 +86,7 @@ class MembershipService:
         new_membership = Membership(
             member_id=current.member_id,
             plan_id=current.plan_id,
-            start_date=current.end_date + timedelta(days=1),
+            start_date=max(date.today(), current.end_date + timedelta(days=1)) if current.end_date else date.today(),
             status=MembershipStatus.pending,
         )
         new_membership.calculate_end_date(plan.duration_days)
@@ -110,7 +113,6 @@ class MembershipService:
         payments = session.exec(
             select(Payment).where(
                 Payment.membership_id == membership_id,
-                Payment.status == PaymentStatus.completed,
             )
         ).all()
         return sum(p.amount for p in payments) or Decimal("0.00")

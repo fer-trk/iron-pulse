@@ -82,7 +82,7 @@ with Session(get_engine()) as session:
         "username": "docker-check-admin", "password": PASSWORD,
     }, form=True)["access_token"]
     plan = request("/api/v1/plans/", "POST", {
-        "name": "Docker check monthly", "price": 20, "duration_days": 30,
+        "name": "Docker check monthly", "price": "49.99", "duration_days": 30,
     }, token, expected=201)
     member = request("/api/v1/members/", "POST", {
         "first_name": "Docker", "last_name": "Check", "email": "docker.check@example.test",
@@ -91,10 +91,11 @@ with Session(get_engine()) as session:
         "member_id": member["id"], "plan_id": plan["id"], "start_date": str(date.today()),
     }, token, expected=201)
     payment = request("/api/v1/payments/", "POST", {
-        "membership_id": membership["id"], "amount": "20.00",
+        "membership_id": membership["id"], "amount": "49.99",
         "payment_method": "cash", "status": "completed",
     }, token, expected=201)
     assert payment["membership_id"] == membership["id"]
+    assert request(f"/api/v1/memberships/{membership['id']}", token=token)["status"] == "active"
     request("/api/v1/reports/income", token=token)
 
     compose("exec", "-T", "api", "python", "-c", """

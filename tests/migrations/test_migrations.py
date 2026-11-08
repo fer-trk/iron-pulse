@@ -10,6 +10,9 @@ import sys
 import unittest
 
 from sqlalchemy import create_engine, inspect, text
+from alembic.config import Config
+from alembic.script import ScriptDirectory
+from decimal import Decimal
 
 from app.core.config import settings
 
@@ -61,6 +64,9 @@ class PostgreSQLMigrationsTest(unittest.TestCase):
             "Use an empty, disposable database for this test.",
         )
 
+        alembic("upgrade", "37212ae7fe48")
+        with engine.begin() as connection:
+            connection.execute(text("INSERT INTO plans (name, price, duration_days, active, created_at, updated_at) VALUES ('Legacy plan', 49.99, 30, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"))
         alembic("upgrade", "head")
         alembic("upgrade", "head")
 
@@ -71,9 +77,10 @@ class PostgreSQLMigrationsTest(unittest.TestCase):
             {"members", "reservations"},
         )
         with engine.connect() as connection:
+            self.assertEqual(connection.execute(text("SELECT price FROM plans")).scalar_one(), Decimal("49.99"))
             self.assertEqual(
                 connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one(),
-                "37212ae7fe48",
+                ScriptDirectory.from_config(Config(str(ROOT / "alembic.ini"))).get_current_head(),
             )
 
 

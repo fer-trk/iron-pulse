@@ -79,9 +79,6 @@
             <label class="form-label">Plan *</label>
             <select class="form-select" id="membershipPlanId" onchange="onPlanSelected()">
               <option value="">Select a plan...</option>
-              <option value="1" data-price="30"  data-duration="30">Mensual</option>
-              <option value="2" data-price="150" data-duration="180">Semestral</option>
-              <option value="3" data-price="270" data-duration="365">Anual</option>
             </select>
           </div>
 
@@ -112,11 +109,8 @@
 
           <div class="mb-3">
             <label class="form-label">Status</label>
-            <select class="form-select" id="membershipStatus">
+            <select class="form-select" id="membershipStatus" disabled>
               <option value="pending">Pending</option>
-              <option value="active">Active</option>
-              <option value="expired">Expired</option>
-              <option value="cancelled">Cancelled</option>
             </select>
           </div>
 

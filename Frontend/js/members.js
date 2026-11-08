@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", loadMembers);
 async function loadMembers() {
     showLoading("members-table-container");
     try {
-        const members = await getData("/members/");
+        const members = await getAllData("/members/");
         renderMembersTable(members);
     } catch (error) {
         console.error("Error loading members:", error);
